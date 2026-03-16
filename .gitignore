@@ -1,0 +1,30 @@
+# Claude Code
+.claude/
+
+# ==================== BACKEND ====================
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/*.log
+
+# Configurações locais com segredos
+backend/src/main/resources/application-dev.yaml
+backend/src/main/resources/application-local.yaml
+backend/src/main/resources/application-prod.yaml
+
+# IDEs
+*.iml
+.idea/
+.eclipse/
+*.class
+
+# ==================== FRONTEND ====================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# ==================== GERAL ====================
+*.log
+.DS_Store
+Thumbs.db
