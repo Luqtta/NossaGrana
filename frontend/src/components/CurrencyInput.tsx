@@ -19,14 +19,13 @@ export const CurrencyInput = ({ value, onChange, className, placeholder = '0,00'
 
   const handleFocus = () => {
     setFocused(true);
-    const cents = Math.round(value * 100);
-    setRawCents(cents > 0 ? cents.toString() : '');
+    setRawCents(value > 0 ? Math.round(value).toString() : '');
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, '');
     setRawCents(digits);
-    onChange(digits ? parseInt(digits, 10) / 100 : 0);
+    onChange(digits ? parseInt(digits, 10) : 0);
   };
 
   const handleBlur = () => {
