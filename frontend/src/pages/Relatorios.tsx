@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { ModalExportarPDF } from '../components/ModalExportarPDF';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip,
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -45,6 +44,7 @@ export const Relatorios = () => {
   const [dadosLinha, setDadosLinha] = useState<DadosLinha[]>([]);
   const [dadosBarras, setDadosBarras] = useState<DadosBarras[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalPDF, setModalPDF] = useState(false);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -110,56 +110,6 @@ export const Relatorios = () => {
     navigate('/login');
   };
 
-  const exportarPDF = () => {
-    const doc = new jsPDF();
-    const periodo = modoPeriodo === 'mes'
-      ? `${meses[mes - 1]} ${ano}`
-      : `${periodoInicio} a ${periodoFim}`;
-
-    doc.setFontSize(18);
-    doc.text('Relatório NossaGrana', 14, 20);
-    doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text(`Período: ${periodo}`, 14, 28);
-
-    doc.setFontSize(13);
-    doc.setTextColor(0);
-    doc.text('Gastos por Categoria', 14, 40);
-    autoTable(doc, {
-      startY: 44,
-      head: [['Categoria', 'Valor']],
-      body: dadosPizza.map(d => [d.icone + ' ' + d.categoria, `R$ ${formatBRL(d.valor)}`]),
-      theme: 'striped',
-    });
-
-    const y1 = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(13);
-    doc.text(`Evolução Mensal ${ano}`, 14, y1);
-    autoTable(doc, {
-      startY: y1 + 4,
-      head: [['Mês', 'Total Gasto']],
-      body: dadosLinha.map(d => [d.mes, `R$ ${formatBRL(d.valor)}`]),
-      theme: 'striped',
-    });
-
-    const y2 = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(13);
-    doc.text('Comparação por Parceiro e Categoria', 14, y2);
-    autoTable(doc, {
-      startY: y2 + 4,
-      head: [['Categoria', casal?.nomeParceiro1 || 'Parceiro 1', casal?.nomeParceiro2 || 'Parceiro 2', 'Compartilhada']],
-      body: dadosBarras.map(d => [
-        d.categoria,
-        `R$ ${formatBRL(d.PARCEIRO_1)}`,
-        `R$ ${formatBRL(d.PARCEIRO_2)}`,
-        `R$ ${formatBRL(d.COMPARTILHADA)}`,
-      ]),
-      theme: 'striped',
-    });
-
-    doc.save(`relatorio_${periodo.replace(/\s/g, '_')}.pdf`);
-  };
-
   const meses = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
@@ -187,7 +137,7 @@ export const Relatorios = () => {
               <p className="text-gray-600 dark:text-gray-400 mt-1">Análise visual das suas finanças</p>
             </div>
             <button
-              onClick={exportarPDF}
+              onClick={() => setModalPDF(true)}
               className="bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition font-medium"
             >
               📄 Exportar PDF
@@ -369,6 +319,8 @@ export const Relatorios = () => {
           )}
         </div>
       </main>
+
+      <ModalExportarPDF isOpen={modalPDF} onClose={() => setModalPDF(false)} />
     </div>
   );
 };
