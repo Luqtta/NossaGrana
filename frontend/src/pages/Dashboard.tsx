@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Sidebar } from '../components/Sidebar';
@@ -20,6 +20,15 @@ export const Dashboard = () => {
   const [modoDivisao, setModoDivisao] = useState<'igual' | 'proprio'>('igual');
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const lastTapRef = useRef<number>(0);
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 350) {
+      navigate('/historico');
+    }
+    lastTapRef.current = now;
+  };
 
   useEffect(() => {
     carregarDados();
@@ -269,11 +278,18 @@ export const Dashboard = () => {
                 {despesas.slice(0, 5).map((despesa) => {
                   const categoria = categorias.find(c => c.id === despesa.categoriaId);
                   return (
-                    <div key={despesa.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                    <div
+                      key={despesa.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition cursor-pointer select-none"
+                      onDoubleClick={() => navigate('/historico')}
+                      onTouchEnd={handleDoubleTap}
+                    >
                       <div className="flex items-center gap-4">
                         <div className="text-3xl">{categoria?.icone || '📦'}</div>
                         <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">{despesa.descricao}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">
+                            {despesa.descricao || <span className="text-gray-400 dark:text-gray-500 italic">Sem descrição</span>}
+                          </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {categoria?.nome || 'Sem categoria'} • {new Date(despesa.dataTransacao).toLocaleDateString('pt-BR')}
                           </p>
