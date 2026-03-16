@@ -23,6 +23,7 @@ export interface DespesaRequest {
 export interface Despesa {
   id: number;
   dataTransacao: string;
+  dataCriacao?: string;
   descricao: string;
   valor: number;
   categoriaNome: string;

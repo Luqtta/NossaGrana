@@ -143,6 +143,7 @@ public class DespesaService {
         return DespesaResponse.builder()
             .id(despesa.getId())
             .dataTransacao(despesa.getDataTransacao())
+            .dataCriacao(despesa.getDataCriacao())
             .descricao(despesa.getDescricao())
             .valor(despesa.getValor())
             .categoriaNome(despesa.getCategoria().getNome())

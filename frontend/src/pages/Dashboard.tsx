@@ -277,7 +277,13 @@ export const Dashboard = () => {
               <div className="space-y-3">
                 {[...despesas]
                   .sort((a, b) => {
-                    const dateDiff = new Date(b.dataTransacao).getTime() - new Date(a.dataTransacao).getTime();
+                    const timeA = a.dataCriacao
+                      ? new Date(a.dataCriacao).getTime()
+                      : new Date(`${a.dataTransacao}T00:00:00`).getTime();
+                    const timeB = b.dataCriacao
+                      ? new Date(b.dataCriacao).getTime()
+                      : new Date(`${b.dataTransacao}T00:00:00`).getTime();
+                    const dateDiff = timeB - timeA;
                     if (dateDiff !== 0) return dateDiff;
                     return b.id - a.id;
                   })

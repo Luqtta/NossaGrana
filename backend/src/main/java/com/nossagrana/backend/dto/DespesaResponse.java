@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -16,6 +17,7 @@ public class DespesaResponse {
     
     private Long id;
     private LocalDate dataTransacao;
+    private LocalDateTime dataCriacao;
     private String descricao;
     private BigDecimal valor;
     private String categoriaNome;
