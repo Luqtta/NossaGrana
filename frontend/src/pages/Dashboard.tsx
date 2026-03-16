@@ -57,6 +57,10 @@ export const Dashboard = () => {
   };
 
   const totalGasto = despesas.reduce((acc, desp) => acc + Number(desp.valor), 0);
+  const totalOrcamentoCategorias = categorias.reduce((acc, cat) => acc + Number(cat.orcamentoMensal || 0), 0);
+  const percentualOrcamento = totalOrcamentoCategorias > 0
+    ? (totalGasto / totalOrcamentoCategorias) * 100
+    : 0;
 
   const categoriasSobreOrcamento = categorias.filter(cat => {
     if (!cat.orcamentoMensal) return false;
@@ -131,8 +135,21 @@ export const Dashboard = () => {
               <p className="text-sm text-red-100 mt-1">{despesas.length} despesas este mês</p>
             </div>
 
+            {/* Card OrÃ§amento Geral */}
+            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.2s forwards'}}>
+              <p className="text-emerald-100 text-sm font-medium mb-2">OrÃ§amento Geral</p>
+              <p className="text-3xl font-bold">
+                <AnimatedNumber value={totalOrcamentoCategorias} />
+              </p>
+              <p className="text-sm text-emerald-100 mt-1">
+                {totalOrcamentoCategorias > 0
+                  ? `${percentualOrcamento.toFixed(0)}% do orÃ§amento usado`
+                  : 'Nenhum orÃ§amento definido'}
+              </p>
+            </div>
+
             {/* Card Meta Mensal */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.2s forwards'}}>
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.3s forwards'}}>
               <p className="text-blue-100 text-sm font-medium mb-2">Meta Mensal</p>
               <p className="text-3xl font-bold">
                 <AnimatedNumber value={estatisticas?.metaMensal || 0} />
@@ -141,7 +158,7 @@ export const Dashboard = () => {
             </div>
 
             {/* Card Saldo */}
-            <div className={`bg-gradient-to-br ${(estatisticas?.saldo || 0) >= 0 ? 'from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700' : 'from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700'} rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0`} style={{animation: 'fadeInUp 0.6s ease-out 0.3s forwards'}}>
+            <div className={`bg-gradient-to-br ${(estatisticas?.saldo || 0) >= 0 ? 'from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700' : 'from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700'} rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0`} style={{animation: 'fadeInUp 0.6s ease-out 0.4s forwards'}}>
               <p className="text-white/80 text-sm font-medium mb-2">Saldo do Mês</p>
               <p className="text-3xl font-bold">
                 <AnimatedNumber value={Math.abs(estatisticas?.saldo || 0)} />
@@ -152,7 +169,7 @@ export const Dashboard = () => {
             </div>
 
             {/* Card Gastos por Parceiro */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:-translate-y-1 transition-all duration-300 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.4s forwards'}}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:-translate-y-1 transition-all duration-300 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.5s forwards'}}>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">Gastos por Pessoa</p>
 
               <div className="space-y-3">

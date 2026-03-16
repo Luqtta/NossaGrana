@@ -4,7 +4,6 @@ import com.nossagrana.backend.entity.Casal;
 import com.nossagrana.backend.entity.Despesa;
 import com.nossagrana.backend.entity.Usuario;
 import com.nossagrana.backend.repository.CasalRepository;
-import com.nossagrana.backend.repository.CategoriaRepository;
 import com.nossagrana.backend.repository.DespesaRepository;
 import com.nossagrana.backend.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ public class CasalService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final DespesaRepository despesaRepository;
-    private final CategoriaRepository categoriaRepository;
     
     public Casal buscarPorId(Long id) {
         return casalRepository.findById(id)
@@ -134,11 +132,8 @@ public class CasalService {
             .mapToDouble(d -> d.getValor().doubleValue())
             .sum();
         
-        // Calcular meta mensal somando os orçamentos das categorias ativas
-        double metaMensal = categoriaRepository.findByCasalIdAndAtivaTrue(casalId)
-            .stream()
-            .mapToDouble(c -> c.getOrcamentoMensal() != null ? c.getOrcamentoMensal() : 0.0)
-            .sum();
+        // Calcular saldo (meta - gasto)
+        double metaMensal = casal.getMetaMensal() != null ? casal.getMetaMensal() : 0.0;
         double saldo = metaMensal - totalGeral;
         
         Map<String, Object> stats = new HashMap<>();
