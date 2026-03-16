@@ -287,9 +287,7 @@ export const Dashboard = () => {
                       <div className="flex items-center gap-4">
                         <div className="text-3xl">{categoria?.icone || '📦'}</div>
                         <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">
-                            {despesa.descricao || <span className="text-gray-400 dark:text-gray-500 italic">Sem descrição</span>}
-                          </p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{despesa.descricao}</p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {categoria?.nome || 'Sem categoria'} • {new Date(despesa.dataTransacao).toLocaleDateString('pt-BR')}
                           </p>
