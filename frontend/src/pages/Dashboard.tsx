@@ -39,13 +39,13 @@ export const Dashboard = () => {
       setLoading(true);
       const mes = new Date().getMonth() + 1;
       const ano = new Date().getFullYear();
-      
+
       const [despesasData, categoriasData, statsData] = await Promise.all([
         despesasApi.listarPorMes(mes, ano),
         categoriasApi.listarPorCasal(),
         casalApi.buscarEstatisticas(user.casalId, mes, ano),
       ]);
-      
+
       setDespesas(despesasData);
       setCategorias(categoriasData);
       setEstatisticas(statsData);
@@ -98,24 +98,38 @@ export const Dashboard = () => {
       <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Header */}
-          <div className="mb-8 opacity-0 animate-fadeInUp" style={{animation: 'fadeInUp 0.6s ease-out forwards'}}>
+          <div
+            className="mb-8 opacity-0 animate-fadeInUp"
+            style={{ animation: 'fadeInUp 0.6s ease-out forwards' }}
+          >
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
               Olá, {user.nome}! Bem-vindo de volta.
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Aqui está o resumo das suas finanças</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Aqui está o resumo das suas finanças
+            </p>
           </div>
 
           {/* Alertas de Orçamento */}
           {categoriasSobreOrcamento.length > 0 && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-xl opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.05s forwards'}}>
+            <div
+              className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-xl opacity-0"
+              style={{ animation: 'fadeInUp 0.6s ease-out 0.05s forwards' }}
+            >
               <p className="font-semibold text-red-700 dark:text-red-400 mb-2">
                 ⚠️ {categoriasSobreOrcamento.length} {categoriasSobreOrcamento.length === 1 ? 'categoria ultrapassou' : 'categorias ultrapassaram'} o orçamento este mês:
               </p>
               <div className="flex flex-wrap gap-2">
                 {categoriasSobreOrcamento.map(cat => {
-                  const gasto = despesas.filter(d => d.categoriaId === cat.id).reduce((acc, d) => acc + Number(d.valor), 0);
+                  const gasto = despesas
+                    .filter(d => d.categoriaId === cat.id)
+                    .reduce((acc, d) => acc + Number(d.valor), 0);
+
                   return (
-                    <span key={cat.id} className="text-sm bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-3 py-1 rounded-full">
+                    <span
+                      key={cat.id}
+                      className="text-sm bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-3 py-1 rounded-full"
+                    >
                       {cat.icone} {cat.nome} — R$ {formatBRL(gasto)} / R$ {formatBRL(cat.orcamentoMensal!)}
                     </span>
                   );
@@ -125,96 +139,197 @@ export const Dashboard = () => {
           )}
 
           {/* Cards de Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Card Total Gasto */}
-            <div className="bg-gradient-to-br from-red-500 to-rose-600 dark:from-red-600 dark:to-rose-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.1s forwards'}}>
-              <p className="text-red-100 text-sm font-medium mb-2">Total Gasto</p>
-              <p className="text-3xl font-bold">
-                <AnimatedNumber value={totalGasto} />
-              </p>
-              <p className="text-sm text-red-100 mt-1">{despesas.length} despesas este mês</p>
-            </div>
-
-            {/* Card OrÃ§amento Geral */}
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.2s forwards'}}>
-              <p className="text-emerald-100 text-sm font-medium mb-2">OrÃ§amento Geral</p>
-              <p className="text-3xl font-bold">
-                <AnimatedNumber value={totalOrcamentoCategorias} />
-              </p>
-              <p className="text-sm text-emerald-100 mt-1">
-                {totalOrcamentoCategorias > 0
-                  ? `${percentualOrcamento.toFixed(0)}% do orÃ§amento usado`
-                  : 'Nenhum orÃ§amento definido'}
-              </p>
-            </div>
-
-            {/* Card Meta Mensal */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.3s forwards'}}>
-              <p className="text-blue-100 text-sm font-medium mb-2">Meta Mensal</p>
-              <p className="text-3xl font-bold">
-                <AnimatedNumber value={estatisticas?.metaMensal || 0} />
-              </p>
-              <p className="text-sm text-blue-100 mt-1">Objetivo do mês</p>
-            </div>
-
-            {/* Card Saldo */}
-            <div className={`bg-gradient-to-br ${(estatisticas?.saldo || 0) >= 0 ? 'from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700' : 'from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700'} rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0`} style={{animation: 'fadeInUp 0.6s ease-out 0.4s forwards'}}>
-              <p className="text-white/80 text-sm font-medium mb-2">Saldo do Mês</p>
-              <p className="text-3xl font-bold">
-                <AnimatedNumber value={Math.abs(estatisticas?.saldo || 0)} />
-              </p>
-              <p className="text-sm text-white/80 mt-1">
-                {(estatisticas?.saldo || 0) >= 0 ? 'Dentro da meta!' : 'Acima da meta!'}
-              </p>
-            </div>
-
-            {/* Card Gastos por Parceiro */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:-translate-y-1 transition-all duration-300 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.5s forwards'}}>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">Gastos por Pessoa</p>
-
-              <div className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{estatisticas?.nomeParceiro1 || 'Parceiro 1'}</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      R$ {formatBRL(estatisticas?.totalParceiro1 || 0)}
-                    </span>
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
+            {/* Esquerda - 4 cards em 2x2 */}
+            <div className="xl:col-span-7">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Card Total Gasto */}
+                <div
+                  className="bg-gradient-to-br from-red-500 to-rose-600 dark:from-red-600 dark:to-rose-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between"
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.1s forwards' }}
+                >
+                  <div>
+                    <p className="text-red-100 text-sm font-medium mb-2">Total Gasto</p>
+                    <p className="text-3xl font-bold">
+                      <AnimatedNumber value={totalGasto} />
+                    </p>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className="bg-blue-500 dark:bg-blue-400 h-2 rounded-full transition-all duration-500"
-                      style={{width: `${((estatisticas?.totalParceiro1 || 0) / (estatisticas?.totalGeral || 1)) * 100}%`}}
-                    ></div>
+                  <p className="text-sm text-red-100 mt-4">{despesas.length} despesas este mês</p>
+                </div>
+
+                {/* Card Saldo do Mês */}
+                <div
+                  className={`bg-gradient-to-br ${
+                    (estatisticas?.saldo || 0) >= 0
+                      ? 'from-emerald-500 to-lime-600 dark:from-emerald-600 dark:to-lime-700'
+                      : 'from-amber-500 to-orange-600 dark:from-amber-600 dark:to-orange-700'
+                  } rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between`}
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.2s forwards' }}
+                >
+                  <div>
+                    <p className="text-white/80 text-sm font-medium mb-2">Saldo do Mês</p>
+                    <p className="text-3xl font-bold">
+                      <AnimatedNumber value={Math.abs(estatisticas?.saldo || 0)} />
+                    </p>
+                  </div>
+                  <p className="text-sm text-white/80 mt-4">
+                    {(estatisticas?.saldo || 0) >= 0 ? 'Dentro da meta!' : 'Acima da meta!'}
+                  </p>
+                </div>
+
+                {/* Card Meta Mensal */}
+                <div
+                  className="bg-gradient-to-br from-blue-500 to-cyan-600 dark:from-blue-600 dark:to-cyan-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between"
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.3s forwards' }}
+                >
+                  <div>
+                    <p className="text-blue-100 text-sm font-medium mb-2">Meta Mensal</p>
+                    <p className="text-3xl font-bold">
+                      <AnimatedNumber value={estatisticas?.metaMensal || 0} />
+                    </p>
+                  </div>
+                  <p className="text-sm text-blue-100 mt-4">Objetivo definido para o mês</p>
+                </div>
+
+                {/* Card Orçamento Geral */}
+                <div
+                  className="bg-gradient-to-br from-violet-500 to-fuchsia-600 dark:from-violet-600 dark:to-fuchsia-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between"
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.4s forwards' }}
+                >
+                  <div>
+                    <p className="text-violet-100 text-sm font-medium mb-2">Orçamento Geral</p>
+                    <p className="text-3xl font-bold">
+                      <AnimatedNumber value={totalOrcamentoCategorias} />
+                    </p>
+                  </div>
+                  <p className="text-sm text-violet-100 mt-4">
+                    {totalOrcamentoCategorias > 0
+                      ? `${percentualOrcamento.toFixed(0)}% do orçamento usado`
+                      : 'Nenhum orçamento definido'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Direita - Gastos por Pessoa */}
+            <div className="xl:col-span-5">
+              <div
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:-translate-y-1 transition-all duration-300 opacity-0 h-full min-h-[364px]"
+                style={{ animation: 'fadeInUp 0.6s ease-out 0.5s forwards' }}
+              >
+                <div className="flex items-start justify-between mb-6 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Gastos por Pessoa
+                    </p>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                      Distribuição do mês
+                    </h3>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Total geral</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                      R$ {formatBRL(estatisticas?.totalGeral || 0)}
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{estatisticas?.nomeParceiro2 || 'Parceiro 2'}</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      R$ {formatBRL(estatisticas?.totalParceiro2 || 0)}
-                    </span>
+                <div className="space-y-5">
+                  {/* Parceiro 1 */}
+                  <div className="rounded-xl bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {estatisticas?.nomeParceiro1 || 'Parceiro 1'}
+                      </span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        R$ {formatBRL(estatisticas?.totalParceiro1 || 0)}
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                      <div
+                        className="bg-sky-500 h-3 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${((estatisticas?.totalParceiro1 || 0) / (estatisticas?.totalGeral || 1)) * 100}%`,
+                        }}
+                      />
+                    </div>
+
+                    <p className="text-xs text-sky-700 dark:text-sky-300 mt-2">
+                      {(((estatisticas?.totalParceiro1 || 0) / (estatisticas?.totalGeral || 1)) * 100).toFixed(1)}% do total
+                    </p>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className="bg-purple-500 dark:bg-purple-400 h-2 rounded-full transition-all duration-500"
-                      style={{width: `${((estatisticas?.totalParceiro2 || 0) / (estatisticas?.totalGeral || 1)) * 100}%`}}
-                    ></div>
+
+                  {/* Parceiro 2 */}
+                  <div className="rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {estatisticas?.nomeParceiro2 || 'Parceiro 2'}
+                      </span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        R$ {formatBRL(estatisticas?.totalParceiro2 || 0)}
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                      <div
+                        className="bg-violet-500 h-3 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${((estatisticas?.totalParceiro2 || 0) / (estatisticas?.totalGeral || 1)) * 100}%`,
+                        }}
+                      />
+                    </div>
+
+                    <p className="text-xs text-violet-700 dark:text-violet-300 mt-2">
+                      {(((estatisticas?.totalParceiro2 || 0) / (estatisticas?.totalGeral || 1)) * 100).toFixed(1)}% do total
+                    </p>
+                  </div>
+
+                  {/* Compartilhado */}
+                  <div className="rounded-xl bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Compartilhado
+                      </span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        R$ {formatBRL(estatisticas?.totalCompartilhado || 0)}
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                      <div
+                        className="bg-teal-500 h-3 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${((estatisticas?.totalCompartilhado || 0) / (estatisticas?.totalGeral || 1)) * 100}%`,
+                        }}
+                      />
+                    </div>
+
+                    <p className="text-xs text-teal-700 dark:text-teal-300 mt-2">
+                      {(((estatisticas?.totalCompartilhado || 0) / (estatisticas?.totalGeral || 1)) * 100).toFixed(1)}% do total
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Compartilhado</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      R$ {formatBRL(estatisticas?.totalCompartilhado || 0)}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className="bg-emerald-500 dark:bg-emerald-400 h-2 rounded-full transition-all duration-500"
-                      style={{width: `${((estatisticas?.totalCompartilhado || 0) / (estatisticas?.totalGeral || 1)) * 100}%`}}
-                    ></div>
+                <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="rounded-xl bg-gray-50 dark:bg-gray-700/60 p-3">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Itens</p>
+                      <p className="text-base font-bold text-gray-900 dark:text-white">{despesas.length}</p>
+                    </div>
+
+                    <div className="rounded-xl bg-gray-50 dark:bg-gray-700/60 p-3">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Categorias</p>
+                      <p className="text-base font-bold text-gray-900 dark:text-white">{categorias.length}</p>
+                    </div>
+
+                    <div className="rounded-xl bg-gray-50 dark:bg-gray-700/60 p-3">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Meta</p>
+                      <p className="text-base font-bold text-gray-900 dark:text-white">
+                        R$ {formatBRL(estatisticas?.metaMensal || 0)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -223,45 +338,77 @@ export const Dashboard = () => {
 
           {/* Divisão do Mês */}
           {estatisticas && (estatisticas.totalGeral || 0) > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.45s forwards'}}>
+            <div
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 opacity-0"
+              style={{ animation: 'fadeInUp 0.6s ease-out 0.45s forwards' }}
+            >
               <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">Divisão do Mês</h3>
+                <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                  Divisão do Mês
+                </h3>
+
                 <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-xs">
                   <button
                     onClick={() => setModoDivisao('igual')}
-                    className={`px-3 py-1.5 font-medium transition ${modoDivisao === 'igual' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    className={`px-3 py-1.5 font-medium transition ${
+                      modoDivisao === 'igual'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
                   >
                     Total ÷ 2
                   </button>
                   <button
                     onClick={() => setModoDivisao('proprio')}
-                    className={`px-3 py-1.5 font-medium transition ${modoDivisao === 'proprio' ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    className={`px-3 py-1.5 font-medium transition ${
+                      modoDivisao === 'proprio'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
                   >
                     Próprio + ½ compartilhado
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
-                  { nome: estatisticas.nomeParceiro1, proprio: estatisticas.totalParceiro1 || 0, cor: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' },
-                  { nome: estatisticas.nomeParceiro2, proprio: estatisticas.totalParceiro2 || 0, cor: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800' },
+                  {
+                    nome: estatisticas.nomeParceiro1,
+                    proprio: estatisticas.totalParceiro1 || 0,
+                    cor: 'text-sky-600 dark:text-sky-400',
+                    bg: 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800',
+                  },
+                  {
+                    nome: estatisticas.nomeParceiro2,
+                    proprio: estatisticas.totalParceiro2 || 0,
+                    cor: 'text-violet-600 dark:text-violet-400',
+                    bg: 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800',
+                  },
                 ].map((p) => {
                   const metadeCompartilhado = (estatisticas.totalCompartilhado || 0) / 2;
                   const valor = modoDivisao === 'igual'
                     ? (estatisticas.totalGeral || 0) / 2
                     : p.proprio + metadeCompartilhado;
+
                   return (
                     <div key={p.nome} className={`rounded-xl p-4 border ${p.bg}`}>
                       <p className={`text-sm font-semibold ${p.cor} mb-1`}>{p.nome}</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">R$ {formatBRL(valor)}</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        R$ {formatBRL(valor)}
+                      </p>
+
                       {modoDivisao === 'proprio' && (
                         <div className="mt-2 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
                           <p>Próprio: R$ {formatBRL(p.proprio)}</p>
                           <p>½ compartilhado: R$ {formatBRL(metadeCompartilhado)}</p>
                         </div>
                       )}
+
                       {modoDivisao === 'igual' && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">metade de R$ {formatBRL(estatisticas.totalGeral || 0)}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          metade de R$ {formatBRL(estatisticas.totalGeral || 0)}
+                        </p>
                       )}
                     </div>
                   );
@@ -271,7 +418,10 @@ export const Dashboard = () => {
           )}
 
           {/* Botão Nova Despesa */}
-          <div className="mb-8 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.5s forwards'}}>
+          <div
+            className="mb-8 opacity-0"
+            style={{ animation: 'fadeInUp 0.6s ease-out 0.5s forwards' }}
+          >
             <button
               onClick={() => navigate('/nova-despesa')}
               className="bg-emerald-600 dark:bg-emerald-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-emerald-700 dark:hover:bg-emerald-600 transition shadow-lg flex items-center gap-2"
@@ -282,13 +432,22 @@ export const Dashboard = () => {
           </div>
 
           {/* Últimas Despesas */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 opacity-0" style={{animation: 'fadeInUp 0.6s ease-out 0.6s forwards'}}>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Últimas Despesas</h3>
-            
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 opacity-0"
+            style={{ animation: 'fadeInUp 0.6s ease-out 0.6s forwards' }}
+          >
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              Últimas Despesas
+            </h3>
+
             {despesas.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 dark:text-gray-400 text-lg">Nenhuma despesa cadastrada ainda</p>
-                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Clique em "Nova Despesa" para começar</p>
+                <p className="text-gray-500 dark:text-gray-400 text-lg">
+                  Nenhuma despesa cadastrada ainda
+                </p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                  Clique em "Nova Despesa" para começar
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -297,43 +456,53 @@ export const Dashboard = () => {
                     const timeA = a.dataCriacao
                       ? new Date(a.dataCriacao).getTime()
                       : new Date(`${a.dataTransacao}T00:00:00`).getTime();
+
                     const timeB = b.dataCriacao
                       ? new Date(b.dataCriacao).getTime()
                       : new Date(`${b.dataTransacao}T00:00:00`).getTime();
+
                     const dateDiff = timeB - timeA;
                     if (dateDiff !== 0) return dateDiff;
                     return b.id - a.id;
                   })
                   .slice(0, 5)
                   .map((despesa) => {
-                  const categoria = categorias.find(c => c.id === despesa.categoriaId);
-                  return (
-                    <div
-                      key={despesa.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition cursor-pointer select-none"
-                      onClick={handleCardClick}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="text-3xl">{categoria?.icone || '📦'}</div>
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">{despesa.descricao}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {categoria?.nome || 'Sem categoria'} • {new Date(despesa.dataTransacao).toLocaleDateString('pt-BR')}
+                    const categoria = categorias.find(c => c.id === despesa.categoriaId);
+
+                    return (
+                      <div
+                        key={despesa.id}
+                        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition cursor-pointer select-none"
+                        onClick={handleCardClick}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="text-3xl">{categoria?.icone || '📦'}</div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                              {despesa.descricao}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {categoria?.nome || 'Sem categoria'} • {new Date(despesa.dataTransacao).toLocaleDateString('pt-BR')}
+                            </p>
+                            {despesa.observacoes && (
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                {despesa.observacoes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="font-bold text-lg text-gray-900 dark:text-white">
+                            R$ {formatBRL(Number(despesa.valor))}
                           </p>
-                          {despesa.observacoes && (
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{despesa.observacoes}</p>
-                          )}
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {despesa.metodoPagamento}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg text-gray-900 dark:text-white">
-                          R$ {formatBRL(Number(despesa.valor))}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{despesa.metodoPagamento}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             )}
           </div>
