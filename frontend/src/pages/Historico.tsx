@@ -339,6 +339,9 @@ export const Historico = () => {
                                 )}
                               </div>
                               <p className="text-sm text-gray-600 dark:text-gray-400">{despesa.categoriaNome}</p>
+                              {despesa.observacoes && (
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{despesa.observacoes}</p>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">

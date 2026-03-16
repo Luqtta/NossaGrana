@@ -291,6 +291,9 @@ export const Dashboard = () => {
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {categoria?.nome || 'Sem categoria'} • {new Date(despesa.dataTransacao).toLocaleDateString('pt-BR')}
                           </p>
+                          {despesa.observacoes && (
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{despesa.observacoes}</p>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
