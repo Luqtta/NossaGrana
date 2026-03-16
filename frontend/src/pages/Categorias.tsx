@@ -23,6 +23,7 @@ export const Categorias = () => {
   const [modalDesativar, setModalDesativar] = useState<CategoriaComSaldo | null>(null);
   const [novoOrcamento, setNovoOrcamento] = useState(0);
   const [formCategoria, setFormCategoria] = useState({ nome: '', icone: '📦', cor: '#10b981', orcamento: 0 });
+  const [submitting, setSubmitting] = useState(false);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const mes = new Date().getMonth() + 1;
@@ -55,7 +56,8 @@ export const Categorias = () => {
   };
 
   const handleDefinirOrcamento = async () => {
-    if (!modalOrcamento) return;
+    if (!modalOrcamento || submitting) return;
+    setSubmitting(true);
     try {
       await categoriasApi.definirOrcamento(modalOrcamento.id, novoOrcamento);
       toast.success('Orçamento definido!');
@@ -64,14 +66,15 @@ export const Categorias = () => {
       carregarCategorias();
     } catch {
       toast.error('Erro ao definir orçamento');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleCriar = async () => {
-    if (!formCategoria.nome.trim()) {
-      toast.error('Nome é obrigatório');
-      return;
-    }
+    if (!formCategoria.nome.trim()) { toast.error('Nome é obrigatório'); return; }
+    if (submitting) return;
+    setSubmitting(true);
     try {
       await categoriasApi.criar({
         nome: formCategoria.nome,
@@ -86,15 +89,16 @@ export const Categorias = () => {
       carregarCategorias();
     } catch {
       toast.error('Erro ao criar categoria');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleEditar = async () => {
     if (!modalEditar) return;
-    if (!formCategoria.nome.trim()) {
-      toast.error('Nome é obrigatório');
-      return;
-    }
+    if (!formCategoria.nome.trim()) { toast.error('Nome é obrigatório'); return; }
+    if (submitting) return;
+    setSubmitting(true);
     try {
       await categoriasApi.editar(modalEditar.id, {
         nome: formCategoria.nome,
@@ -106,11 +110,14 @@ export const Categorias = () => {
       carregarCategorias();
     } catch {
       toast.error('Erro ao editar categoria');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDesativar = async () => {
-    if (!modalDesativar) return;
+    if (!modalDesativar || submitting) return;
+    setSubmitting(true);
     try {
       await categoriasApi.desativar(modalDesativar.id);
       toast.success('Categoria desativada!');
@@ -118,6 +125,8 @@ export const Categorias = () => {
       carregarCategorias();
     } catch {
       toast.error('Erro ao desativar categoria');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -278,9 +287,10 @@ export const Categorias = () => {
               </button>
               <button
                 onClick={handleDefinirOrcamento}
-                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition"
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
               >
-                Salvar
+                {submitting ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
           </div>
@@ -343,9 +353,10 @@ export const Categorias = () => {
               </button>
               <button
                 onClick={handleCriar}
-                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition"
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
               >
-                Criar
+                {submitting ? 'Criando...' : 'Criar'}
               </button>
             </div>
           </div>
@@ -398,9 +409,10 @@ export const Categorias = () => {
               </button>
               <button
                 onClick={handleEditar}
-                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition"
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
               >
-                Salvar
+                {submitting ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
           </div>
