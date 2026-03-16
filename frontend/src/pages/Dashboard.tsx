@@ -275,7 +275,14 @@ export const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {[...despesas].sort((a, b) => new Date(b.dataTransacao).getTime() - new Date(a.dataTransacao).getTime()).slice(0, 5).map((despesa) => {
+                {[...despesas]
+                  .sort((a, b) => {
+                    const dateDiff = new Date(b.dataTransacao).getTime() - new Date(a.dataTransacao).getTime();
+                    if (dateDiff !== 0) return dateDiff;
+                    return b.id - a.id;
+                  })
+                  .slice(0, 5)
+                  .map((despesa) => {
                   const categoria = categorias.find(c => c.id === despesa.categoriaId);
                   return (
                     <div
