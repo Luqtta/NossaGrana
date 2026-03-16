@@ -34,7 +34,7 @@ export const CurrencyInput = ({ value, onChange, className, placeholder = '0,00'
 
   return (
     <div className="relative">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium pointer-events-none">
+      <span className="absolute left-4 inset-y-0 flex items-center text-gray-500 dark:text-gray-400 font-medium pointer-events-none">
         R$
       </span>
       <input
@@ -44,7 +44,7 @@ export const CurrencyInput = ({ value, onChange, className, placeholder = '0,00'
         onChange={handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        className={`pl-10 ${className || ''}`}
+        className={`pl-12 ${className || ''}`}
         placeholder={placeholder}
         required={required}
       />

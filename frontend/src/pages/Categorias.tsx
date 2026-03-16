@@ -221,7 +221,7 @@ export const Categorias = () => {
                       </div>
                       <div className={`flex justify-between text-sm font-bold ${getStatusColor(cat.saldo.status)}`}>
                         <span>Saldo:</span>
-                        <span>R$ {formatBRL(Math.abs(cat.saldo.saldo))}</span>
+                        <span>{cat.saldo.saldo < 0 ? '-' : ''}R$ {formatBRL(Math.abs(cat.saldo.saldo))}</span>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div
