@@ -124,8 +124,10 @@ export const Historico = () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = `despesas_${mesAno}.csv`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   const getResponsavelNome = (responsavel: string) => {
