@@ -20,14 +20,14 @@ export const Dashboard = () => {
   const [modoDivisao, setModoDivisao] = useState<'igual' | 'proprio'>('igual');
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const lastTapRef = useRef<number>(0);
+  const lastClickRef = useRef<number>(0);
 
-  const handleDoubleTap = () => {
+  const handleCardClick = () => {
     const now = Date.now();
-    if (now - lastTapRef.current < 350) {
+    if (now - lastClickRef.current < 400) {
       navigate('/historico');
     }
-    lastTapRef.current = now;
+    lastClickRef.current = now;
   };
 
   useEffect(() => {
@@ -281,8 +281,7 @@ export const Dashboard = () => {
                     <div
                       key={despesa.id}
                       className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition cursor-pointer select-none"
-                      onDoubleClick={() => navigate('/historico')}
-                      onTouchEnd={handleDoubleTap}
+                      onClick={handleCardClick}
                     >
                       <div className="flex items-center gap-4">
                         <div className="text-3xl">{categoria?.icone || '📦'}</div>
