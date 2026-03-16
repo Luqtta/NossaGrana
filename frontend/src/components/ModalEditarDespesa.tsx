@@ -79,7 +79,7 @@ export const ModalEditarDespesa = ({ despesa, isOpen, onClose, onSuccess }: Moda
 
     setLoading(true);
     try {
-      await despesasApi.atualizar(despesa.id, formData, user.id);
+      await despesasApi.atualizar(despesa.id, formData);
       toast.success('Despesa atualizada!');
       onSuccess();
     } catch (error: any) {

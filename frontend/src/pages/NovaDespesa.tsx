@@ -99,7 +99,7 @@ export const NovaDespesa = () => {
     setLoading(true);
 
     try {
-      await despesasApi.criar(formData, user.id);
+      await despesasApi.criar(formData);
       salvarDescricaoRecente(formData.descricao.trim());
       toast.success('Despesa cadastrada com sucesso!');
       navigate('/dashboard');

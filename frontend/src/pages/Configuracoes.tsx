@@ -49,7 +49,7 @@ export const Configuracoes = () => {
     }
 
     try {
-      await casalApi.enviarConvite(user.casalId, user.id, emailParceiro);
+      await casalApi.enviarConvite(emailParceiro);
       toast.success('Convite enviado! O parceiro receberá um email com o link.');
       setShowConvite(false);
       setEmailParceiro('');

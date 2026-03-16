@@ -89,18 +89,6 @@ export const Historico = () => {
     }
   };
 
-  const aplicarFiltros = async () => {
-    try {
-      setLoading(true);
-      const resultado = await despesasApi.filtrar(user.casalId, filtros);
-      setDespesas(resultado);
-      setPaginaAtual(1);
-    } catch {
-      toast.error('Erro ao filtrar');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const limparFiltros = () => {
     setFiltros({

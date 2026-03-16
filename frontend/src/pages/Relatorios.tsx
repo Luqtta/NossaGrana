@@ -247,7 +247,7 @@ export const Relatorios = () => {
                           cx="50%"
                           cy="50%"
                           outerRadius={90}
-                          label={({ categoria, percent }) => `${categoria} ${(percent * 100).toFixed(0)}%`}
+                          label={({ categoria, percent }: any) => `${categoria} ${((percent ?? 0) * 100).toFixed(0)}%`}
                           labelLine={false}
                           isAnimationActive={true}
                           animationBegin={300}
@@ -257,7 +257,7 @@ export const Relatorios = () => {
                             <Cell key={`cell-${index}`} fill={entry.cor} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={tooltipStyle} itemStyle={{ color: '#e5e7eb' }} labelStyle={{ color: '#f9fafb', fontWeight: 'bold' }} />
+                        <Tooltip formatter={(value) => formatCurrency(value as number)} contentStyle={tooltipStyle} itemStyle={{ color: '#e5e7eb' }} labelStyle={{ color: '#f9fafb', fontWeight: 'bold' }} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -272,7 +272,7 @@ export const Relatorios = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="mes" tick={{ fontSize: 12, fill: '#6b7280' }} />
                       <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} tickFormatter={(v) => `R$${v}`} />
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Tooltip formatter={(value) => formatCurrency(value as number)} />
                       <Legend />
                       <Line
                         type="monotone"
@@ -304,7 +304,7 @@ export const Relatorios = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="categoria" tick={{ fontSize: 11, fill: '#6b7280' }} />
                       <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} tickFormatter={(v) => `R$${v}`} />
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={tooltipStyle} itemStyle={{ color: '#e5e7eb' }} labelStyle={{ color: '#f9fafb', fontWeight: 'bold' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                      <Tooltip formatter={(value) => formatCurrency(value as number)} contentStyle={tooltipStyle} itemStyle={{ color: '#e5e7eb' }} labelStyle={{ color: '#f9fafb', fontWeight: 'bold' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                       <Legend />
                       <Bar dataKey="PARCEIRO_1" name={casal?.nomeParceiro1 || 'Parceiro 1'} fill="#3b82f6" radius={[4, 4, 0, 0]} isAnimationActive={true} animationBegin={200} animationDuration={1000} />
                       <Bar dataKey="PARCEIRO_2" name={casal?.nomeParceiro2 || 'Parceiro 2'} fill="#8b5cf6" radius={[4, 4, 0, 0]} isAnimationActive={true} animationBegin={400} animationDuration={1000} />
