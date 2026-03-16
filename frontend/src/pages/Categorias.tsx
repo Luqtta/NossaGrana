@@ -5,6 +5,7 @@ import { categoriasApi, type SaldoCategoriaData } from '../api/categorias.api';
 import { formatBRL } from '../utils/formatBRL';
 import { Modal } from '../components/Modal';
 import { Sidebar } from '../components/Sidebar';
+import { CurrencyInput } from '../components/CurrencyInput';
 import type { Categoria } from '../types/despesa.types';
 
 interface CategoriaComSaldo extends Categoria {
@@ -20,8 +21,8 @@ export const Categorias = () => {
   const [modalCriar, setModalCriar] = useState(false);
   const [modalEditar, setModalEditar] = useState<CategoriaComSaldo | null>(null);
   const [modalDesativar, setModalDesativar] = useState<CategoriaComSaldo | null>(null);
-  const [novoOrcamento, setNovoOrcamento] = useState('');
-  const [formCategoria, setFormCategoria] = useState({ nome: '', icone: '📦', cor: '#10b981', orcamento: '0' });
+  const [novoOrcamento, setNovoOrcamento] = useState(0);
+  const [formCategoria, setFormCategoria] = useState({ nome: '', icone: '📦', cor: '#10b981', orcamento: 0 });
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const mes = new Date().getMonth() + 1;
@@ -56,10 +57,10 @@ export const Categorias = () => {
   const handleDefinirOrcamento = async () => {
     if (!modalOrcamento) return;
     try {
-      await categoriasApi.definirOrcamento(modalOrcamento.id, parseFloat(novoOrcamento) || 0);
+      await categoriasApi.definirOrcamento(modalOrcamento.id, novoOrcamento);
       toast.success('Orçamento definido!');
       setModalOrcamento(null);
-      setNovoOrcamento('');
+      setNovoOrcamento(0);
       carregarCategorias();
     } catch {
       toast.error('Erro ao definir orçamento');
@@ -76,12 +77,12 @@ export const Categorias = () => {
         nome: formCategoria.nome,
         icone: formCategoria.icone,
         cor: formCategoria.cor,
-        orcamento: parseFloat(formCategoria.orcamento) || 0,
+        orcamento: formCategoria.orcamento,
         casalId: user.casalId,
       });
       toast.success('Categoria criada!');
       setModalCriar(false);
-      setFormCategoria({ nome: '', icone: '📦', cor: '#10b981', orcamento: '0' });
+      setFormCategoria({ nome: '', icone: '📦', cor: '#10b981', orcamento: 0 });
       carregarCategorias();
     } catch {
       toast.error('Erro ao criar categoria');
@@ -121,7 +122,7 @@ export const Categorias = () => {
   };
 
   const abrirModalEditar = (cat: CategoriaComSaldo) => {
-    setFormCategoria({ nome: cat.nome, icone: cat.icone, cor: cat.cor, orcamento: String(cat.orcamentoMensal ?? 0) });
+    setFormCategoria({ nome: cat.nome, icone: cat.icone, cor: cat.cor, orcamento: cat.orcamentoMensal ?? 0 });
     setModalEditar(cat);
   };
 
@@ -229,7 +230,7 @@ export const Categorias = () => {
 
                   <button
                     onClick={() => {
-                      setNovoOrcamento(String(cat.saldo?.orcamentoMensal ?? cat.orcamentoMensal ?? 0));
+                      setNovoOrcamento(cat.saldo?.orcamentoMensal ?? cat.orcamentoMensal ?? 0);
                       setModalOrcamento(cat);
                     }}
                     className="mt-4 w-full text-sm text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 rounded-lg py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition"
@@ -246,7 +247,7 @@ export const Categorias = () => {
       {/* FAB - Nova Categoria */}
       <button
         onClick={() => {
-          setFormCategoria({ nome: '', icone: '📦', cor: '#10b981', orcamento: '0' });
+          setFormCategoria({ nome: '', icone: '📦', cor: '#10b981', orcamento: 0 });
           setModalCriar(true);
         }}
         className="fixed bottom-8 right-8 bg-emerald-600 dark:bg-emerald-500 text-white w-14 h-14 rounded-full shadow-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-all duration-200 hover:scale-110 flex items-center justify-center text-2xl z-10"
@@ -263,19 +264,14 @@ export const Categorias = () => {
               {modalOrcamento.icone} {modalOrcamento.nome}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Defina o orçamento mensal para esta categoria</p>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
+            <CurrencyInput
               value={novoOrcamento}
-              onChange={(e) => setNovoOrcamento(e.target.value)}
+              onChange={setNovoOrcamento}
               className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:border-emerald-500 outline-none mb-4"
-              placeholder="0.00"
-              autoFocus
             />
             <div className="flex gap-3">
               <button
-                onClick={() => { setModalOrcamento(null); setNovoOrcamento(''); }}
+                onClick={() => { setModalOrcamento(null); setNovoOrcamento(0); }}
                 className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition"
               >
                 Cancelar
@@ -331,14 +327,10 @@ export const Categorias = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Orçamento Mensal (R$)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
+                <CurrencyInput
                   value={formCategoria.orcamento}
-                  onChange={(e) => setFormCategoria({ ...formCategoria, orcamento: e.target.value })}
+                  onChange={(v) => setFormCategoria({ ...formCategoria, orcamento: v })}
                   className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:border-emerald-500 outline-none"
-                  placeholder="0.00"
                 />
               </div>
             </div>
