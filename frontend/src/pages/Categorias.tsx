@@ -290,10 +290,9 @@ export const Categorias = () => {
       {modalOrcamento && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 opacity-0" style={{ animation: 'fadeInUp 0.3s ease-out forwards' }}>
-            <div className="absolute -top-1 -right-1 w-56 h-20 pointer-events-none">
+            <div className="absolute top-3 right-3 pointer-events-none">
               <div
-                className={`w-full h-full ${isMetaExcedida || saldoMetaMensal < 0 ? 'bg-red-600/90' : metaMensal > 0 ? 'bg-emerald-600/90' : 'bg-amber-500/90'} text-white text-[9px] font-bold tracking-wide leading-tight flex items-start justify-end p-2 text-right`}
-                style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}
+                className={`px-3 py-2 rounded-md ${isMetaExcedida || saldoMetaMensal < 0 ? 'bg-red-600' : metaMensal > 0 ? 'bg-emerald-600' : 'bg-amber-500'} text-white text-[10px] font-bold tracking-wide leading-tight text-right shadow`}
               >
                 {metaMensal > 0 ? (
                   <span>
@@ -318,7 +317,7 @@ export const Categorias = () => {
             />
             {isMetaExcedida && (
               <p className="mb-3 text-xs text-red-500 dark:text-red-400">
-                O or?amento total ultrapassa a meta mensal. Reajuste para salvar.
+                O orcamento total ultrapassa a meta mensal. Reajuste para salvar.
               </p>
             )}
 
