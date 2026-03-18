@@ -63,6 +63,10 @@ export const Categorias = () => {
 
   const handleDefinirOrcamento = async () => {
     if (!modalOrcamento || submitting) return;
+    if (metaMensal > 0 && totalComNovoOrcamento > metaMensal) {
+      toast.error('Or?amento total ultrapassa a meta mensal. Reajuste para salvar.');
+      return;
+    }
     setSubmitting(true);
     try {
       await categoriasApi.definirOrcamento(modalOrcamento.id, novoOrcamento);
@@ -167,6 +171,7 @@ export const Categorias = () => {
     : 0;
   const totalComNovoOrcamento = totalOrcamentoCategorias - orcamentoAtualModal + Number(novoOrcamento || 0);
   const saldoMetaMensal = (metaMensal || 0) - totalComNovoOrcamento;
+  const isMetaExcedida = metaMensal > 0 && totalComNovoOrcamento > metaMensal;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden">
@@ -284,27 +289,35 @@ export const Categorias = () => {
       {/* Modal Definir Orçamento */}
       {modalOrcamento && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 opacity-0" style={{ animation: 'fadeInUp 0.3s ease-out forwards' }}>
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 opacity-0" style={{ animation: 'fadeInUp 0.3s ease-out forwards' }}>
+            <div className="absolute top-0 right-0 w-44 h-16 pointer-events-none">
+              <div
+                className={`w-full h-full ${isMetaExcedida || saldoMetaMensal < 0 ? 'bg-red-600/90' : metaMensal > 0 ? 'bg-emerald-600/90' : 'bg-amber-500/90'} text-white text-[10px] font-bold tracking-wide flex items-start justify-end p-2`}
+                style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}
+              >
+                {metaMensal > 0 ? (
+                  <>DISPONIVEL: R$ {formatBRL(saldoMetaMensal)} / R$ {formatBRL(metaMensal)}</>
+                ) : (
+                  <>META NAO DEFINIDA</>
+                )}
+              </div>
+            </div>
+
+
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
               {modalOrcamento.icone} {modalOrcamento.nome}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Defina o orçamento mensal para esta categoria</p>
-            {metaMensal > 0 ? (
-              <div className="mb-3 text-xs font-semibold text-right">
-                <span className={saldoMetaMensal >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}>
-                  DISPON??VEL: R$ {formatBRL(saldoMetaMensal)} / R$ {formatBRL(metaMensal)}
-                </span>
-              </div>
-            ) : (
-              <div className="mb-3 text-xs text-amber-600 dark:text-amber-400 text-right">
-                Meta mensal n??o definida
-              </div>
-            )}
             <CurrencyInput
               value={novoOrcamento}
               onChange={setNovoOrcamento}
-              className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:border-emerald-500 outline-none mb-4"
+              className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:border-emerald-500 outline-none mb-3"
             />
+            {isMetaExcedida && (
+              <p className="mb-3 text-xs text-red-500 dark:text-red-400">
+                O or?amento total ultrapassa a meta mensal. Reajuste para salvar.
+              </p>
+            )}
 
             <div className="flex gap-3">
               <button
@@ -315,8 +328,8 @@ export const Categorias = () => {
               </button>
               <button
                 onClick={handleDefinirOrcamento}
-                disabled={submitting}
-                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
+                disabled={submitting || isMetaExcedida}
+                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? 'Salvando...' : 'Salvar'}
               </button>
@@ -328,7 +341,8 @@ export const Categorias = () => {
       {/* Modal Criar Categoria */}
       {modalCriar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 opacity-0" style={{ animation: 'fadeInUp 0.3s ease-out forwards' }}>
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 opacity-0" style={{ animation: 'fadeInUp 0.3s ease-out forwards' }}>
+
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Nova Categoria</h3>
             <div className="space-y-4">
               <div>
@@ -381,8 +395,8 @@ export const Categorias = () => {
               </button>
               <button
                 onClick={handleCriar}
-                disabled={submitting}
-                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
+                disabled={submitting || isMetaExcedida}
+                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? 'Criando...' : 'Criar'}
               </button>
@@ -394,7 +408,8 @@ export const Categorias = () => {
       {/* Modal Editar Categoria */}
       {modalEditar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 opacity-0" style={{ animation: 'fadeInUp 0.3s ease-out forwards' }}>
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 opacity-0" style={{ animation: 'fadeInUp 0.3s ease-out forwards' }}>
+
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Editar Categoria</h3>
             <div className="space-y-4">
               <div>
@@ -437,8 +452,8 @@ export const Categorias = () => {
               </button>
               <button
                 onClick={handleEditar}
-                disabled={submitting}
-                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
+                disabled={submitting || isMetaExcedida}
+                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? 'Salvando...' : 'Salvar'}
               </button>
