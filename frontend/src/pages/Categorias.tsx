@@ -290,15 +290,18 @@ export const Categorias = () => {
       {modalOrcamento && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 opacity-0" style={{ animation: 'fadeInUp 0.3s ease-out forwards' }}>
-            <div className="absolute top-0 right-0 w-44 h-16 pointer-events-none">
+            <div className="absolute -top-1 -right-1 w-56 h-20 pointer-events-none">
               <div
-                className={`w-full h-full ${isMetaExcedida || saldoMetaMensal < 0 ? 'bg-red-600/90' : metaMensal > 0 ? 'bg-emerald-600/90' : 'bg-amber-500/90'} text-white text-[10px] font-bold tracking-wide flex items-start justify-end p-2`}
+                className={`w-full h-full ${isMetaExcedida || saldoMetaMensal < 0 ? 'bg-red-600/90' : metaMensal > 0 ? 'bg-emerald-600/90' : 'bg-amber-500/90'} text-white text-[9px] font-bold tracking-wide leading-tight flex items-start justify-end p-2 text-right`}
                 style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}
               >
                 {metaMensal > 0 ? (
-                  <>DISPONIVEL: R$ {formatBRL(saldoMetaMensal)} / R$ {formatBRL(metaMensal)}</>
+                  <span>
+                    <span className="block">DISPONIVEL</span>
+                    <span className="block">R$ {formatBRL(saldoMetaMensal)} / R$ {formatBRL(metaMensal)}</span>
+                  </span>
                 ) : (
-                  <>META NAO DEFINIDA</>
+                  <span className="block">META NAO DEFINIDA</span>
                 )}
               </div>
             </div>
@@ -329,7 +332,7 @@ export const Categorias = () => {
               <button
                 onClick={handleDefinirOrcamento}
                 disabled={submitting || isMetaExcedida}
-                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-500"
               >
                 {submitting ? 'Salvando...' : 'Salvar'}
               </button>
@@ -396,7 +399,7 @@ export const Categorias = () => {
               <button
                 onClick={handleCriar}
                 disabled={submitting || isMetaExcedida}
-                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-500"
               >
                 {submitting ? 'Criando...' : 'Criar'}
               </button>
@@ -453,7 +456,7 @@ export const Categorias = () => {
               <button
                 onClick={handleEditar}
                 disabled={submitting || isMetaExcedida}
-                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-500"
               >
                 {submitting ? 'Salvando...' : 'Salvar'}
               </button>
