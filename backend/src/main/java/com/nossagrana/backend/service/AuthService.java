@@ -45,6 +45,7 @@ public class AuthService {
         new Object[]{"Impostos", "💰", "#14b8a6"},
         new Object[]{"Outros", "📦", "#64748b"}
     );
+    private static final double ORCAMENTO_PADRAO = 100.0;
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
@@ -62,6 +63,7 @@ public class AuthService {
                 .nome((String) c[0])
                 .icone((String) c[1])
                 .cor((String) c[2])
+                .orcamentoMensal(ORCAMENTO_PADRAO)
                 .casal(casalSalvo)
                 .build())
             .toList();

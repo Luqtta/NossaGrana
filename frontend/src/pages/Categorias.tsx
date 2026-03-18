@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { categoriasApi, type SaldoCategoriaData } from '../api/categorias.api';
+import { casalApi } from '../api/casal.api';
 import { formatBRL } from '../utils/formatBRL';
 import { Modal } from '../components/Modal';
 import { Sidebar } from '../components/Sidebar';
@@ -22,8 +23,9 @@ export const Categorias = () => {
   const [modalEditar, setModalEditar] = useState<CategoriaComSaldo | null>(null);
   const [modalDesativar, setModalDesativar] = useState<CategoriaComSaldo | null>(null);
   const [novoOrcamento, setNovoOrcamento] = useState(0);
-  const [formCategoria, setFormCategoria] = useState({ nome: '', icone: '📦', cor: '#10b981', orcamento: 0 });
+  const [formCategoria, setFormCategoria] = useState({ nome: '', icone: '📦', cor: '#10b981', orcamento: 100 });
   const [submitting, setSubmitting] = useState(false);
+  const [metaMensal, setMetaMensal] = useState(0);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const mes = new Date().getMonth() + 1;
@@ -36,7 +38,11 @@ export const Categorias = () => {
   const carregarCategorias = async () => {
     try {
       setLoading(true);
-      const data = await categoriasApi.listarPorCasal();
+      const [data, casalData] = await Promise.all([
+        categoriasApi.listarPorCasal(),
+        casalApi.buscar(user.casalId).catch(() => null),
+      ]);
+      setMetaMensal(casalData?.metaMensal ?? 0);
       const categoriasComSaldo = await Promise.all(
         data.map(async (cat) => {
           try {
@@ -85,7 +91,7 @@ export const Categorias = () => {
       });
       toast.success('Categoria criada!');
       setModalCriar(false);
-      setFormCategoria({ nome: '', icone: '📦', cor: '#10b981', orcamento: 0 });
+      setFormCategoria({ nome: '', icone: '📦', cor: '#10b981', orcamento: 100 });
       carregarCategorias();
     } catch {
       toast.error('Erro ao criar categoria');
@@ -151,6 +157,16 @@ export const Categorias = () => {
     if (status === 'AMARELO') return 'bg-yellow-500';
     return 'bg-green-500';
   };
+
+  const totalOrcamentoCategorias = categorias.reduce(
+    (acc, cat) => acc + Number(cat.saldo?.orcamentoMensal ?? cat.orcamentoMensal ?? 0),
+    0
+  );
+  const orcamentoAtualModal = modalOrcamento
+    ? Number(modalOrcamento.saldo?.orcamentoMensal ?? modalOrcamento.orcamentoMensal ?? 0)
+    : 0;
+  const totalComNovoOrcamento = totalOrcamentoCategorias - orcamentoAtualModal + Number(novoOrcamento || 0);
+  const saldoMetaMensal = (metaMensal || 0) - totalComNovoOrcamento;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden">
@@ -256,7 +272,7 @@ export const Categorias = () => {
       {/* FAB - Nova Categoria */}
       <button
         onClick={() => {
-          setFormCategoria({ nome: '', icone: '📦', cor: '#10b981', orcamento: 0 });
+          setFormCategoria({ nome: '', icone: '📦', cor: '#10b981', orcamento: 100 });
           setModalCriar(true);
         }}
         className="fixed bottom-8 right-8 bg-emerald-600 dark:bg-emerald-500 text-white w-14 h-14 rounded-full shadow-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-all duration-200 hover:scale-110 flex items-center justify-center text-2xl z-10"
@@ -273,11 +289,23 @@ export const Categorias = () => {
               {modalOrcamento.icone} {modalOrcamento.nome}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Defina o orçamento mensal para esta categoria</p>
+            {metaMensal > 0 ? (
+              <div className="mb-3 text-xs font-semibold text-right">
+                <span className={saldoMetaMensal >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}>
+                  DISPON??VEL: R$ {formatBRL(saldoMetaMensal)} / R$ {formatBRL(metaMensal)}
+                </span>
+              </div>
+            ) : (
+              <div className="mb-3 text-xs text-amber-600 dark:text-amber-400 text-right">
+                Meta mensal n??o definida
+              </div>
+            )}
             <CurrencyInput
               value={novoOrcamento}
               onChange={setNovoOrcamento}
               className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:border-emerald-500 outline-none mb-4"
             />
+
             <div className="flex gap-3">
               <button
                 onClick={() => { setModalOrcamento(null); setNovoOrcamento(0); }}

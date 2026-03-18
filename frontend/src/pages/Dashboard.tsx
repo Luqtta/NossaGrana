@@ -70,6 +70,11 @@ export const Dashboard = () => {
     return gasto > cat.orcamentoMensal;
   });
 
+  const saldoMes = estatisticas?.saldo || 0;
+  const metaMensal = estatisticas?.metaMensal || 0;
+  const percentualSaldo = metaMensal > 0 ? saldoMes / metaMensal : 0;
+  const saldoStatus = saldoMes < 0 ? 'negativo' : (metaMensal > 0 && percentualSaldo <= 0.1 ? 'alerta' : 'positivo');
+
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
@@ -160,20 +165,22 @@ export const Dashboard = () => {
                 {/* Card Saldo do Mês */}
                 <div
                   className={`bg-gradient-to-br ${
-                    (estatisticas?.saldo || 0) >= 0
+                    saldoStatus === 'positivo'
                       ? 'from-emerald-500 to-lime-600 dark:from-emerald-600 dark:to-lime-700'
-                      : 'from-amber-500 to-orange-600 dark:from-amber-600 dark:to-orange-700'
+                      : saldoStatus === 'alerta'
+                        ? 'from-yellow-500 to-amber-600 dark:from-yellow-600 dark:to-amber-700'
+                        : 'from-red-500 to-rose-600 dark:from-red-600 dark:to-rose-700'
                   } rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between`}
                   style={{ animation: 'fadeInUp 0.6s ease-out 0.2s forwards' }}
                 >
                   <div>
                     <p className="text-white/80 text-sm font-medium mb-2">Saldo do Mês</p>
                     <p className="text-3xl font-bold">
-                      <AnimatedNumber value={Math.abs(estatisticas?.saldo || 0)} />
+                      <AnimatedNumber value={estatisticas?.saldo || 0} prefix={saldoMes < 0 ? "R$" : "R$ "} />
                     </p>
                   </div>
                   <p className="text-sm text-white/80 mt-4">
-                    {(estatisticas?.saldo || 0) >= 0 ? 'Dentro da meta!' : 'Acima da meta!'}
+                    {saldoStatus === 'positivo' ? 'Dentro da meta!' : saldoStatus === 'alerta' ? 'Perto do limite!' : 'Acima da meta!'}
                   </p>
                 </div>
 
