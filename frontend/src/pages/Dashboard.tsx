@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Settings } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import { SkeletonCard } from '../components/SkeletonCard';
@@ -213,11 +214,24 @@ export const Dashboard = () => {
 
                 {/* Card Meta Mensal */}
                 <div
-                  className="bg-gradient-to-br from-blue-500 to-cyan-600 dark:from-blue-600 dark:to-cyan-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between"
+                  onDoubleClick={() => setEditMeta(true)}
+                  className="group bg-gradient-to-br from-blue-500 to-cyan-600 dark:from-blue-600 dark:to-cyan-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between relative"
                   style={{ animation: 'fadeInUp 0.6s ease-out 0.3s forwards' }}
                 >
                   <div>
-                    <p className="text-blue-100 text-sm font-medium mb-2">Meta Mensal</p>
+                    <div className="flex items-start justify-between">
+                      <p className="text-blue-100 text-sm font-medium mb-2">Meta Mensal</p>
+                      {!editMeta && (
+                        <button
+                          type="button"
+                          onClick={() => setEditMeta(true)}
+                          className="opacity-0 group-hover:opacity-100 transition text-white/90 hover:text-white"
+                          title="Editar meta"
+                        >
+                          <Settings size={16} />
+                        </button>
+                      )}
+                    </div>
                     <p className="text-3xl font-bold">
                       <AnimatedNumber value={estatisticas?.metaMensal || 0} />
                     </p>
@@ -245,14 +259,7 @@ export const Dashboard = () => {
                         </button>
                       </div>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setEditMeta(true)}
-                      className="mt-4 text-xs text-white/90 underline underline-offset-4 hover:text-white"
-                    >
-                      Editar meta do mes
-                    </button>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Card Orçamento Geral */}
