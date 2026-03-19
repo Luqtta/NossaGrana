@@ -30,6 +30,7 @@ export const ModalEditarDespesa = ({ despesa, isOpen, onClose, onSuccess }: Moda
     metodoPagamento: 'PIX',
     observacoes: '',
   });
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const getResponsavelLabel = (valor: string) => {
     if (valor === 'PARCEIRO_1') return casal?.nomeParceiro1 || 'Parceiro 1';
