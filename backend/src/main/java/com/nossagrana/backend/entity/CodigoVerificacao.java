@@ -38,6 +38,8 @@ public class CodigoVerificacao {
 
     public enum Tipo {
         VERIFICACAO_EMAIL,
-        RESET_SENHA
+        RESET_SENHA,
+        TROCA_EMAIL,
+        TROCA_SENHA
     }
 }

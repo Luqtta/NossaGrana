@@ -3,6 +3,7 @@ package com.nossagrana.backend.service;
 import com.nossagrana.backend.entity.Casal;
 import com.nossagrana.backend.entity.Despesa;
 import com.nossagrana.backend.entity.Usuario;
+import com.nossagrana.backend.exception.BusinessException;
 import com.nossagrana.backend.repository.CasalRepository;
 import com.nossagrana.backend.repository.DespesaRepository;
 import com.nossagrana.backend.repository.UsuarioRepository;
@@ -24,6 +25,7 @@ public class CasalService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final DespesaRepository despesaRepository;
+    private final CategoriaPadraoService categoriaPadraoService;
     
     public Casal buscarPorId(Long id) {
         return casalRepository.findById(id)
@@ -62,21 +64,27 @@ public class CasalService {
     public void removerParceiro(Long casalId) {
         Casal casal = casalRepository.findById(casalId)
             .orElseThrow(() -> new RuntimeException("Casal não encontrado"));
-        
-        // Ao invés de deletar o usuário, apenas remove ele do casal
-        if (casal.getEmailConviteParceiro2() != null) {
-            usuarioRepository.findByEmail(casal.getEmailConviteParceiro2())
-                .ifPresent(usuario -> {
-                    usuario.setCasal(null);
-                    usuarioRepository.save(usuario);
-                });
+        if (!Boolean.TRUE.equals(casal.getConviteAceito()) || casal.getEmailConviteParceiro2() == null) {
+            throw new BusinessException("Nao ha parceiro para remover");
         }
-        
+
+        usuarioRepository.findByEmail(casal.getEmailConviteParceiro2())
+            .ifPresent(usuario -> {
+                Casal novoCasal = new Casal();
+                novoCasal.setNomeParceiro1(usuario.getNome());
+                novoCasal = casalRepository.save(novoCasal);
+                categoriaPadraoService.criarCategoriasPadrao(novoCasal);
+
+                usuario.setCasal(novoCasal);
+                usuario.setEhParceiro1(true);
+                usuarioRepository.save(usuario);
+            });
+
         // Limpar dados do parceiro 2 no casal
         casal.setNomeParceiro2(null);
         casal.setEmailConviteParceiro2(null);
         casal.setConviteAceito(false);
-        
+
         casalRepository.save(casal);
     }
     

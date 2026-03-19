@@ -11,6 +11,14 @@ export const Sidebar = ({ onLogout }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userInitials = (user.nome || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part: string) => part[0])
+    .join('')
+    .toUpperCase();
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
@@ -68,6 +76,26 @@ export const Sidebar = ({ onLogout }: SidebarProps) => {
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+        <button
+          onClick={() => handleNavigate('/configuracoes')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+        >
+          {user.fotoPerfil ? (
+            <img
+              src={user.fotoPerfil}
+              alt="Perfil"
+              className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-sm font-bold border border-emerald-200 dark:border-emerald-800">
+              {userInitials || 'NG'}
+            </div>
+          )}
+          <div className="text-left">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{user.nome || 'Perfil'}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Ver perfil</p>
+          </div>
+        </button>
         <div className="flex items-center justify-between px-4 py-2">
           <span className="text-sm text-gray-600 dark:text-gray-400">Tema</span>
           <ThemeToggle />

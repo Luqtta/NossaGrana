@@ -4,14 +4,15 @@ import com.nossagrana.backend.dto.AuthResponse;
 import com.nossagrana.backend.dto.ConviteInfoResponse;
 import com.nossagrana.backend.entity.Casal;
 import com.nossagrana.backend.entity.Convite;
-import com.nossagrana.backend.entity.Despesa;
 import com.nossagrana.backend.entity.Usuario;
 import com.nossagrana.backend.exception.BusinessException;
 import com.nossagrana.backend.exception.ForbiddenException;
 import com.nossagrana.backend.exception.ResourceNotFoundException;
 import com.nossagrana.backend.repository.CasalRepository;
+import com.nossagrana.backend.repository.CategoriaRepository;
 import com.nossagrana.backend.repository.ConviteRepository;
 import com.nossagrana.backend.repository.DespesaRepository;
+import com.nossagrana.backend.repository.HistoricoEdicaoRepository;
 import com.nossagrana.backend.repository.UsuarioRepository;
 import com.nossagrana.backend.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -30,6 +30,8 @@ public class ConviteService {
     private final UsuarioRepository usuarioRepository;
     private final CasalRepository casalRepository;
     private final DespesaRepository despesaRepository;
+    private final HistoricoEdicaoRepository historicoEdicaoRepository;
+    private final CategoriaRepository categoriaRepository;
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
 
@@ -110,15 +112,12 @@ public class ConviteService {
         if (parceiro2.getCasal().getConviteAceito()) {
             throw new BusinessException("Você já faz parte de um casal");
         }
-
-        // Soft-delete all of P2's old expenses
         Long oldCasalId = parceiro2.getCasal().getId();
-        List<Despesa> despesasAntigas = despesaRepository.findAllByCasalId(oldCasalId);
-        despesasAntigas.forEach(d -> d.setAtivo(false));
-        despesaRepository.saveAll(despesasAntigas);
 
         // Link P2 to P1's casal
         Casal casalP1 = convite.getCasal();
+        Usuario parceiro1 = convite.getRemetente();
+        casalP1.setNomeParceiro1(parceiro1.getNome());
         casalP1.setNomeParceiro2(parceiro2.getNome());
         casalP1.setEmailConviteParceiro2(parceiro2.getEmail());
         casalP1.setConviteAceito(true);
@@ -132,8 +131,13 @@ public class ConviteService {
         convite.setUsado(true);
         conviteRepository.save(convite);
 
-        // Delete P2's old empty casal
-        casalRepository.deleteById(oldCasalId);
+        if (!oldCasalId.equals(casalP1.getId())) {
+            conviteRepository.deleteByCasalId(oldCasalId);
+            historicoEdicaoRepository.deleteByCasalId(oldCasalId);
+            despesaRepository.deleteByCasalId(oldCasalId);
+            categoriaRepository.deleteByCasalId(oldCasalId);
+            casalRepository.deleteById(oldCasalId);
+        }
 
         return AuthResponse.builder()
             .token(jwtUtil.generateToken(parceiro2.getEmail()))
@@ -143,6 +147,7 @@ public class ConviteService {
             .email(parceiro2.getEmail())
             .casalId(casalP1.getId())
             .ehParceiro1(false)
+            .fotoPerfil(parceiro2.getFotoPerfil())
             .build();
     }
 }

@@ -24,7 +24,7 @@ export const NovaDespesa = () => {
     descricao: '',
     valor: 0,
     categoriaId: 0,
-    responsavel: 'COMPARTILHADA',
+    responsavel: 'PARCEIRO_1',
     tipoDespesa: 'VARIAVEL',
     metodoPagamento: 'PIX',
     observacoes: '',
@@ -50,8 +50,11 @@ export const NovaDespesa = () => {
       ]);
       setCategorias(categoriasData);
       setCasal(casalData);
+      const responsavelPadrao = casalData?.conviteAceito ? 'COMPARTILHADA' : 'PARCEIRO_1';
       if (categoriasData.length > 0) {
-        setFormData(prev => ({ ...prev, categoriaId: categoriasData[0].id }));
+        setFormData(prev => ({ ...prev, categoriaId: categoriasData[0].id, responsavel: responsavelPadrao }));
+      } else {
+        setFormData(prev => ({ ...prev, responsavel: responsavelPadrao }));
       }
     } catch (error) {
       toast.error('Erro ao carregar dados');
@@ -269,9 +272,13 @@ export const NovaDespesa = () => {
                   onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
                   className="w-full px-4 py-3 pr-10 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-xl focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none transition appearance-none"
                 >
-                  <option value="COMPARTILHADA">Compartilhada (50/50)</option>
                   <option value="PARCEIRO_1">{casal?.nomeParceiro1 || 'Parceiro 1'}</option>
-                  <option value="PARCEIRO_2">{casal?.nomeParceiro2 || 'Parceiro 2'}</option>
+                  {casal?.conviteAceito && (
+                    <option value="PARCEIRO_2">{casal?.nomeParceiro2 || 'Parceiro 2'}</option>
+                  )}
+                  {casal?.conviteAceito && (
+                    <option value="COMPARTILHADA">Compartilhada (50/50)</option>
+                  )}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400">▾</div>
               </div>

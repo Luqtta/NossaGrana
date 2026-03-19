@@ -6,6 +6,7 @@ import com.nossagrana.backend.entity.Categoria;
 import com.nossagrana.backend.entity.Despesa;
 import com.nossagrana.backend.entity.HistoricoEdicao;
 import com.nossagrana.backend.entity.Usuario;
+import com.nossagrana.backend.exception.BusinessException;
 import com.nossagrana.backend.exception.ForbiddenException;
 import com.nossagrana.backend.exception.ResourceNotFoundException;
 import com.nossagrana.backend.repository.CategoriaRepository;
@@ -33,10 +34,13 @@ public class DespesaService {
     @Transactional
     public DespesaResponse criarDespesa(DespesaRequest request, Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
-            .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
 
         Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
-            .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada"));
+            .orElseThrow(() -> new ResourceNotFoundException("Categoria nao encontrada"));
+
+        validarCategoria(usuario, categoria);
+        validarResponsavel(usuario, request.getResponsavel(), null);
 
         Despesa despesa = Despesa.builder()
             .dataTransacao(request.getDataTransacao())
@@ -70,13 +74,13 @@ public class DespesaService {
     @Transactional
     public void deletarDespesa(Long despesaId, Long usuarioId) {
         Despesa despesa = despesaRepository.findById(despesaId)
-            .orElseThrow(() -> new ResourceNotFoundException("Despesa não encontrada"));
+            .orElseThrow(() -> new ResourceNotFoundException("Despesa nao encontrada"));
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
-            .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
 
         if (!despesa.getCasal().getId().equals(usuario.getCasal().getId())) {
-            throw new ForbiddenException("Sem permissão para deletar esta despesa");
+            throw new ForbiddenException("Sem permissao para deletar esta despesa");
         }
 
         despesa.setAtivo(false);
@@ -86,14 +90,16 @@ public class DespesaService {
     @Transactional
     public DespesaResponse atualizar(Long id, DespesaRequest request, Long usuarioId) {
         Despesa despesa = despesaRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Despesa não encontrada"));
+            .orElseThrow(() -> new ResourceNotFoundException("Despesa nao encontrada"));
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
-            .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
 
         if (!despesa.getCasal().getId().equals(usuario.getCasal().getId())) {
-            throw new ForbiddenException("Sem permissão para editar esta despesa");
+            throw new ForbiddenException("Sem permissao para editar esta despesa");
         }
+
+        validarResponsavel(usuario, request.getResponsavel(), despesa);
 
         if (!despesa.getDescricao().equals(request.getDescricao())) {
             registrarEdicao(despesa, "descricao", despesa.getDescricao(), request.getDescricao(), usuario);
@@ -157,4 +163,30 @@ public class DespesaService {
             .urlComprovante(despesa.getUrlComprovante())
             .build();
     }
+    private void validarResponsavel(Usuario usuario, String responsavel, Despesa despesaAtual) {
+        boolean casalAceito = usuario.getCasal() != null && Boolean.TRUE.equals(usuario.getCasal().getConviteAceito());
+        if (!casalAceito) {
+            if ("PARCEIRO_1".equals(responsavel)) {
+                return;
+            }
+            if (despesaAtual != null && responsavel.equals(despesaAtual.getResponsavel())) {
+                return;
+            }
+            throw new BusinessException("Conta solo permite apenas responsavel do Parceiro 1");
+        }
+
+        if (!"PARCEIRO_1".equals(responsavel) && !"PARCEIRO_2".equals(responsavel) && !"COMPARTILHADA".equals(responsavel)) {
+            throw new BusinessException("Responsavel invalido");
+        }
+    }
+
+    private void validarCategoria(Usuario usuario, Categoria categoria) {
+        if (usuario.getCasal() == null) {
+            throw new BusinessException("Usuario sem casal");
+        }
+        if (categoria.getCasal() == null || !categoria.getCasal().getId().equals(usuario.getCasal().getId())) {
+            throw new ForbiddenException("Categoria nao pertence ao seu casal");
+        }
+    }
+
 }

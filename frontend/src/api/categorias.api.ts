@@ -3,7 +3,10 @@ import type { Categoria } from '../types/despesa.types';
 
 const getCasalId = (): number => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  return user.casalId || 1;
+  if (!user.casalId) {
+    throw new Error('Casal nao encontrado');
+  }
+  return user.casalId;
 };
 
 export interface SaldoCategoriaData {

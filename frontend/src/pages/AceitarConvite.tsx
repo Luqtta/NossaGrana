@@ -49,7 +49,7 @@ export const AceitarConvite = () => {
       localStorage.setItem('refreshToken', response.data.refreshToken);
       localStorage.setItem('user', JSON.stringify(response.data));
 
-      toast.success('Bem-vindo ao casal! Suas despesas anteriores foram removidas.');
+      toast.success('Bem-vindo ao casal! Seus dados anteriores foram removidos.');
       navigate('/dashboard');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro ao aceitar convite');
@@ -141,8 +141,8 @@ export const AceitarConvite = () => {
             <div>
               <h3 className="font-bold text-red-700 dark:text-red-400 mb-1">Atenção antes de aceitar</h3>
               <p className="text-sm text-red-700 dark:text-red-300 leading-relaxed">
-                Ao aceitar este convite, <strong>todas as despesas que você registrou sozinho serão excluídas permanentemente</strong>.
-                A partir daí, você passará a compartilhar as finanças com {convite.nomeParceiro1}.
+                Ao aceitar este convite, <strong>todas as despesas que voce registrou sozinho serao excluidas permanentemente</strong>.
+                A partir dai, voce passara a compartilhar as financas com {convite.nomeParceiro1}.
               </p>
             </div>
           </div>

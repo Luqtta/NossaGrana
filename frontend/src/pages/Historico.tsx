@@ -254,8 +254,12 @@ export const Historico = () => {
                     >
                       <option value="">Todos</option>
                       <option value="PARCEIRO_1">{casal?.nomeParceiro1 || 'Parceiro 1'}</option>
-                      <option value="PARCEIRO_2">{casal?.nomeParceiro2 || 'Parceiro 2'}</option>
-                      <option value="COMPARTILHADA">Compartilhada</option>
+                      {casal?.conviteAceito && (
+                        <option value="PARCEIRO_2">{casal?.nomeParceiro2 || 'Parceiro 2'}</option>
+                      )}
+                      {casal?.conviteAceito && (
+                        <option value="COMPARTILHADA">Compartilhada</option>
+                      )}
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500 dark:text-gray-400">▾</div>
                   </div>

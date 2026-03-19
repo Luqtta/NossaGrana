@@ -2,6 +2,7 @@ package com.nossagrana.backend.repository;
 
 import com.nossagrana.backend.entity.Despesa;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,10 @@ public interface DespesaRepository extends JpaRepository<Despesa, Long> {
 
     @Query("SELECT d FROM Despesa d WHERE d.casal.id = :casalId")
     List<Despesa> findAllByCasalId(@Param("casalId") Long casalId);
+
+    @Modifying
+    @Query("DELETE FROM Despesa d WHERE d.casal.id = :casalId")
+    void deleteByCasalId(@Param("casalId") Long casalId);
 
     @Query("SELECT d FROM Despesa d JOIN FETCH d.categoria JOIN FETCH d.usuario " +
            "WHERE d.casal.id = :casalId AND d.dataTransacao BETWEEN :inicio AND :fim")

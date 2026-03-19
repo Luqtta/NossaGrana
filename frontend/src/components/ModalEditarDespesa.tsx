@@ -25,13 +25,17 @@ export const ModalEditarDespesa = ({ despesa, isOpen, onClose, onSuccess }: Moda
     descricao: '',
     valor: 0,
     categoriaId: 0,
-    responsavel: 'COMPARTILHADA',
+    responsavel: 'PARCEIRO_1',
     tipoDespesa: 'VARIAVEL',
     metodoPagamento: 'PIX',
     observacoes: '',
   });
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const getResponsavelLabel = (valor: string) => {
+    if (valor === 'PARCEIRO_1') return casal?.nomeParceiro1 || 'Parceiro 1';
+    if (valor === 'PARCEIRO_2') return casal?.nomeParceiro2 || 'Parceiro 2';
+    return 'Compartilhada';
+  };
 
   useEffect(() => {
     if (isOpen && despesa) {
@@ -162,9 +166,16 @@ export const ModalEditarDespesa = ({ despesa, isOpen, onClose, onSuccess }: Moda
                   onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
                   className="w-full px-4 py-3 pr-10 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:border-emerald-500 outline-none transition appearance-none"
                 >
-                  <option value="COMPARTILHADA">Compartilhada (50/50)</option>
                   <option value="PARCEIRO_1">{casal?.nomeParceiro1 || 'Parceiro 1'}</option>
-                  <option value="PARCEIRO_2">{casal?.nomeParceiro2 || 'Parceiro 2'}</option>
+                  {casal?.conviteAceito && (
+                    <option value="PARCEIRO_2">{casal?.nomeParceiro2 || 'Parceiro 2'}</option>
+                  )}
+                  {casal?.conviteAceito && (
+                    <option value="COMPARTILHADA">Compartilhada (50/50)</option>
+                  )}
+                  {!casal?.conviteAceito && formData.responsavel !== 'PARCEIRO_1' && (
+                    <option value={formData.responsavel}>{getResponsavelLabel(formData.responsavel)}</option>
+                  )}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400">▾</div>
               </div>

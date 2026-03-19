@@ -7,17 +7,22 @@ import { SkeletonCard } from '../components/SkeletonCard';
 import { despesasApi } from '../api/despesas.api';
 import { categoriasApi } from '../api/categorias.api';
 import { casalApi } from '../api/casal.api';
-import type { EstatisticasData } from '../api/casal.api';
+import type { EstatisticasData, CasalData } from '../api/casal.api';
 import type { Despesa, Categoria } from '../types/despesa.types';
 import { formatBRL } from '../utils/formatBRL';
+import { CurrencyInput } from '../components/CurrencyInput';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [estatisticas, setEstatisticas] = useState<EstatisticasData | null>(null);
+  const [casal, setCasal] = useState<CasalData | null>(null);
   const [loading, setLoading] = useState(true);
   const [modoDivisao, setModoDivisao] = useState<'igual' | 'proprio'>('igual');
+  const [editMeta, setEditMeta] = useState(false);
+  const [metaInput, setMetaInput] = useState(0);
+  const [salvandoMeta, setSalvandoMeta] = useState(false);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const lastClickRef = useRef<number>(0);
@@ -34,21 +39,27 @@ export const Dashboard = () => {
     carregarDados();
   }, []);
 
+  useEffect(() => {
+    setMetaInput(estatisticas?.metaMensal || 0);
+  }, [estatisticas?.metaMensal]);
+
   const carregarDados = async () => {
     try {
       setLoading(true);
       const mes = new Date().getMonth() + 1;
       const ano = new Date().getFullYear();
 
-      const [despesasData, categoriasData, statsData] = await Promise.all([
+      const [despesasData, categoriasData, statsData, casalData] = await Promise.all([
         despesasApi.listarPorMes(mes, ano),
         categoriasApi.listarPorCasal(),
         casalApi.buscarEstatisticas(user.casalId, mes, ano),
+        casalApi.buscar(user.casalId),
       ]);
 
       setDespesas(despesasData);
       setCategorias(categoriasData);
       setEstatisticas(statsData);
+      setCasal(casalData);
     } catch (error) {
       toast.error('Erro ao carregar dados');
     } finally {
@@ -74,6 +85,22 @@ export const Dashboard = () => {
   const metaMensal = estatisticas?.metaMensal || 0;
   const percentualSaldo = metaMensal > 0 ? saldoMes / metaMensal : 0;
   const saldoStatus = saldoMes < 0 ? 'negativo' : (metaMensal > 0 && percentualSaldo <= 0.1 ? 'alerta' : 'positivo');
+  const isSolo = !casal?.conviteAceito;
+
+  const handleSalvarMeta = async () => {
+    if (salvandoMeta) return;
+    setSalvandoMeta(true);
+    try {
+      await casalApi.definirMeta(user.casalId, metaInput);
+      toast.success('Meta atualizada com sucesso!');
+      setEditMeta(false);
+      carregarDados();
+    } catch {
+      toast.error('Erro ao atualizar meta');
+    } finally {
+      setSalvandoMeta(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -195,7 +222,37 @@ export const Dashboard = () => {
                       <AnimatedNumber value={estatisticas?.metaMensal || 0} />
                     </p>
                   </div>
-                  <p className="text-sm text-blue-100 mt-4">Objetivo definido para o mês</p>
+                  {editMeta ? (
+                    <div className="mt-4 space-y-2">
+                      <CurrencyInput
+                        value={metaInput}
+                        onChange={setMetaInput}
+                        className="w-full px-3 py-2 rounded-lg text-gray-900 border border-white/40 bg-white/90 focus:outline-none"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSalvarMeta}
+                          disabled={salvandoMeta}
+                          className="flex-1 bg-white/90 text-blue-700 font-semibold py-1.5 rounded-lg hover:bg-white transition disabled:opacity-60"
+                        >
+                          {salvandoMeta ? 'Salvando...' : 'Salvar'}
+                        </button>
+                        <button
+                          onClick={() => { setEditMeta(false); setMetaInput(metaMensal); }}
+                          className="flex-1 border border-white/70 text-white py-1.5 rounded-lg hover:bg-white/10 transition"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setEditMeta(true)}
+                      className="mt-4 text-xs text-white/90 underline underline-offset-4 hover:text-white"
+                    >
+                      Editar meta do mes
+                    </button>
+                  )}
                 </div>
 
                 {/* Card Orçamento Geral */}
@@ -269,6 +326,7 @@ export const Dashboard = () => {
                   </div>
 
                   {/* Parceiro 2 */}
+                  {!isSolo && (
                   <div className="rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -292,8 +350,10 @@ export const Dashboard = () => {
                       {(((estatisticas?.totalParceiro2 || 0) / (estatisticas?.totalGeral || 1)) * 100).toFixed(1)}% do total
                     </p>
                   </div>
+                  )}
 
                   {/* Compartilhado */}
+                  {!isSolo && (
                   <div className="rounded-xl bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -317,6 +377,7 @@ export const Dashboard = () => {
                       {(((estatisticas?.totalCompartilhado || 0) / (estatisticas?.totalGeral || 1)) * 100).toFixed(1)}% do total
                     </p>
                   </div>
+                  )}
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
@@ -344,7 +405,7 @@ export const Dashboard = () => {
           </div>
 
           {/* Divisão do Mês */}
-          {estatisticas && (estatisticas.totalGeral || 0) > 0 && (
+          {!isSolo && estatisticas && (estatisticas.totalGeral || 0) > 0 && (
             <div
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 opacity-0"
               style={{ animation: 'fadeInUp 0.6s ease-out 0.45s forwards' }}

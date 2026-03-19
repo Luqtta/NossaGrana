@@ -17,4 +17,5 @@ export interface AuthResponse {
   email: string;
   casalId?: number;
   ehParceiro1?: boolean;
+  fotoPerfil?: string | null;
 }

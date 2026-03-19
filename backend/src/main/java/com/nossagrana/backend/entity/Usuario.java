@@ -40,4 +40,14 @@ public class Usuario {
     @Builder.Default
     @Column(name = "email_verificado")
     private Boolean emailVerificado = false;
+
+    @Column(name = "foto_perfil", columnDefinition = "TEXT")
+    private String fotoPerfil;
+
+    @Column(name = "email_pendente")
+    private String emailPendente;
+
+    // Campo preparado para futura funcionalidade de ganhos/salario
+    @Column(name = "renda_mensal")
+    private Double rendaMensal;
 }
