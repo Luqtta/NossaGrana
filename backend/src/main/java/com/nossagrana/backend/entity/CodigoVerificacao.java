@@ -26,7 +26,7 @@ public class CodigoVerificacao {
     @Column(nullable = false, length = 12)
     private String codigo;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "integer not null default 0")
     private Integer tentativas = 0;
 
     @Column(name = "data_expiracao", nullable = false)
