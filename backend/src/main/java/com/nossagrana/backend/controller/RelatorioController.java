@@ -1,21 +1,21 @@
 package com.nossagrana.backend.controller;
 
+import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.service.RelatorioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/relatorios")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class RelatorioController {
 
     private final RelatorioService relatorioService;
+    private final AutenticacaoHelper autenticacaoHelper;
 
     @GetMapping("/gastos-por-categoria")
     public ResponseEntity<Map<String, Object>> gastosPorCategoria(
@@ -23,6 +23,7 @@ public class RelatorioController {
             @RequestParam int mes,
             @RequestParam int ano
     ) {
+        autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(relatorioService.gastosPorCategoria(casalId, mes, ano));
     }
 
@@ -31,6 +32,7 @@ public class RelatorioController {
             @RequestParam Long casalId,
             @RequestParam int ano
     ) {
+        autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(relatorioService.evolucaoMensal(casalId, ano));
     }
 
@@ -40,6 +42,7 @@ public class RelatorioController {
             @RequestParam int mes,
             @RequestParam int ano
     ) {
+        autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(relatorioService.comparacaoParceiros(casalId, mes, ano));
     }
 
@@ -49,6 +52,7 @@ public class RelatorioController {
             @RequestParam String dataInicio,
             @RequestParam String dataFim
     ) {
+        autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(relatorioService.gastosPorCategoriaCustom(casalId, LocalDate.parse(dataInicio), LocalDate.parse(dataFim)));
     }
 
@@ -58,6 +62,7 @@ public class RelatorioController {
             @RequestParam String dataInicio,
             @RequestParam String dataFim
     ) {
+        autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(relatorioService.comparacaoParceiroCustom(casalId, LocalDate.parse(dataInicio), LocalDate.parse(dataFim)));
     }
 }

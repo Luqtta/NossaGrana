@@ -23,8 +23,11 @@ public class CodigoVerificacao {
     @Column(nullable = false)
     private Tipo tipo;
 
-    @Column(nullable = false, length = 6)
+    @Column(nullable = false, length = 12)
     private String codigo;
+
+    @Column(nullable = false)
+    private Integer tentativas = 0;
 
     @Column(name = "data_expiracao", nullable = false)
     private LocalDateTime dataExpiracao;

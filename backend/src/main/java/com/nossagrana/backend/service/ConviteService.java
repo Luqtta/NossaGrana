@@ -83,7 +83,6 @@ public class ConviteService {
         return ConviteInfoResponse.builder()
             .nomeParceiro1(convite.getRemetente().getNome())
             .emailConvidado(convite.getEmailConvidado())
-            .casalId(casal.getId())
             .expirado(LocalDateTime.now().isAfter(convite.getDataExpiracao()))
             .usado(convite.getUsado())
             .build();

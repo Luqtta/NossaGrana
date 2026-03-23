@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 public class ConviteInfoResponse {
     private String nomeParceiro1;
     private String emailConvidado;
-    private Long casalId;
     private boolean expirado;
     private boolean usado;
 }

@@ -27,11 +27,23 @@ public class VerificacaoService {
     private final PasswordEncoder passwordEncoder;
     private final SecureRandom secureRandom = new SecureRandom();
 
+    private static final String CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    private static final int CODIGO_TAMANHO = 8;
+    private static final int MAX_TENTATIVAS = 5;
+
+    private String gerarCodigo() {
+        StringBuilder sb = new StringBuilder(CODIGO_TAMANHO);
+        for (int i = 0; i < CODIGO_TAMANHO; i++) {
+            sb.append(CHARS.charAt(secureRandom.nextInt(CHARS.length())));
+        }
+        return sb.toString();
+    }
+
     @Transactional
     public void gerarEEnviarCodigoVerificacao(Usuario usuario) {
         codigoRepo.invalidarCodigos(usuario.getId(), CodigoVerificacao.Tipo.VERIFICACAO_EMAIL);
 
-        String codigo = String.format("%06d", secureRandom.nextInt(1000000));
+        String codigo = gerarCodigo();
 
         CodigoVerificacao cv = new CodigoVerificacao();
         cv.setUsuario(usuario);
@@ -60,7 +72,13 @@ public class VerificacaoService {
             throw new BusinessException("Código expirado. Solicite um novo código.");
         }
 
+        if (cv.getTentativas() >= MAX_TENTATIVAS) {
+            throw new BusinessException("Muitas tentativas incorretas. Solicite um novo código.");
+        }
+
         if (!cv.getCodigo().equals(codigo)) {
+            cv.setTentativas(cv.getTentativas() + 1);
+            codigoRepo.save(cv);
             throw new BusinessException("Código incorreto");
         }
 
@@ -94,7 +112,7 @@ public class VerificacaoService {
 
         codigoRepo.invalidarCodigos(usuario.getId(), CodigoVerificacao.Tipo.TROCA_EMAIL);
 
-        String codigo = String.format("%06d", secureRandom.nextInt(1000000));
+        String codigo = gerarCodigo();
 
         usuario.setEmailPendente(novoEmail);
         usuarioRepository.save(usuario);
@@ -116,11 +134,17 @@ public class VerificacaoService {
             .orElseThrow(() -> new BusinessException("CÃ³digo invÃ¡lido ou expirado"));
 
         if (cv.getDataExpiracao().isBefore(LocalDateTime.now())) {
-            throw new BusinessException("CÃ³digo expirado. Solicite um novo cÃ³digo.");
+            throw new BusinessException("Código expirado. Solicite um novo código.");
+        }
+
+        if (cv.getTentativas() >= MAX_TENTATIVAS) {
+            throw new BusinessException("Muitas tentativas incorretas. Solicite um novo código.");
         }
 
         if (!cv.getCodigo().equals(codigo)) {
-            throw new BusinessException("CÃ³digo incorreto");
+            cv.setTentativas(cv.getTentativas() + 1);
+            codigoRepo.save(cv);
+            throw new BusinessException("Código incorreto");
         }
 
         if (usuario.getEmailPendente() == null || usuario.getEmailPendente().isBlank()) {
@@ -157,7 +181,7 @@ public class VerificacaoService {
     public void gerarEEnviarCodigoTrocaSenha(Usuario usuario) {
         codigoRepo.invalidarCodigos(usuario.getId(), CodigoVerificacao.Tipo.TROCA_SENHA);
 
-        String codigo = String.format("%06d", secureRandom.nextInt(1000000));
+        String codigo = gerarCodigo();
 
         CodigoVerificacao cv = new CodigoVerificacao();
         cv.setUsuario(usuario);
@@ -176,11 +200,17 @@ public class VerificacaoService {
             .orElseThrow(() -> new BusinessException("CÃ³digo invÃ¡lido ou expirado"));
 
         if (cv.getDataExpiracao().isBefore(LocalDateTime.now())) {
-            throw new BusinessException("CÃ³digo expirado. Solicite um novo cÃ³digo.");
+            throw new BusinessException("Código expirado. Solicite um novo código.");
+        }
+
+        if (cv.getTentativas() >= MAX_TENTATIVAS) {
+            throw new BusinessException("Muitas tentativas incorretas. Solicite um novo código.");
         }
 
         if (!cv.getCodigo().equals(codigo)) {
-            throw new BusinessException("CÃ³digo incorreto");
+            cv.setTentativas(cv.getTentativas() + 1);
+            codigoRepo.save(cv);
+            throw new BusinessException("Código incorreto");
         }
 
         cv.setUsado(true);
@@ -209,7 +239,7 @@ public class VerificacaoService {
 
         codigoRepo.invalidarCodigos(usuario.getId(), CodigoVerificacao.Tipo.RESET_SENHA);
 
-        String codigo = String.format("%06d", secureRandom.nextInt(1000000));
+        String codigo = gerarCodigo();
 
         CodigoVerificacao cv = new CodigoVerificacao();
         cv.setUsuario(usuario);
@@ -234,7 +264,13 @@ public class VerificacaoService {
             throw new BusinessException("Código expirado. Solicite um novo código.");
         }
 
+        if (cv.getTentativas() >= MAX_TENTATIVAS) {
+            throw new BusinessException("Muitas tentativas incorretas. Solicite um novo código.");
+        }
+
         if (!cv.getCodigo().equals(codigo)) {
+            cv.setTentativas(cv.getTentativas() + 1);
+            codigoRepo.save(cv);
             throw new BusinessException("Código incorreto");
         }
 

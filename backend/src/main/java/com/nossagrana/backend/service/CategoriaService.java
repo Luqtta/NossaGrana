@@ -5,6 +5,8 @@ import com.nossagrana.backend.dto.SaldoCategoriaResponse;
 import com.nossagrana.backend.entity.Casal;
 import com.nossagrana.backend.entity.Categoria;
 import com.nossagrana.backend.entity.Despesa;
+import com.nossagrana.backend.entity.Usuario;
+import com.nossagrana.backend.exception.ForbiddenException;
 import com.nossagrana.backend.repository.CasalRepository;
 import com.nossagrana.backend.repository.CategoriaRepository;
 import com.nossagrana.backend.repository.DespesaRepository;
@@ -41,16 +43,18 @@ public class CategoriaService {
             .build();
     }
 
-    public void definirOrcamento(Long categoriaId, Double orcamento) {
+    public void definirOrcamento(Long categoriaId, Double orcamento, Usuario usuario) {
         Categoria categoria = categoriaRepository.findById(categoriaId)
             .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+        validarPropriedade(categoria, usuario);
         categoria.setOrcamentoMensal(orcamento);
         categoriaRepository.save(categoria);
     }
 
-    public SaldoCategoriaResponse buscarSaldoCategoria(Long categoriaId, int mes, int ano) {
+    public SaldoCategoriaResponse buscarSaldoCategoria(Long categoriaId, int mes, int ano, Usuario usuario) {
         Categoria categoria = categoriaRepository.findById(categoriaId)
             .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+        validarPropriedade(categoria, usuario);
 
         LocalDate primeiroDia = LocalDate.of(ano, mes, 1);
         LocalDate ultimoDia = primeiroDia.withDayOfMonth(primeiroDia.lengthOfMonth());
@@ -105,9 +109,10 @@ public class CategoriaService {
         return categoriaRepository.save(categoria);
     }
 
-    public void editar(Long categoriaId, String nome, String icone, String cor) {
+    public void editar(Long categoriaId, String nome, String icone, String cor, Usuario usuario) {
         Categoria categoria = categoriaRepository.findById(categoriaId)
             .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+        validarPropriedade(categoria, usuario);
 
         categoria.setNome(nome);
         categoria.setIcone(icone);
@@ -116,11 +121,18 @@ public class CategoriaService {
         categoriaRepository.save(categoria);
     }
 
-    public void desativar(Long categoriaId) {
+    public void desativar(Long categoriaId, Usuario usuario) {
         Categoria categoria = categoriaRepository.findById(categoriaId)
             .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+        validarPropriedade(categoria, usuario);
 
         categoria.setAtiva(false);
         categoriaRepository.save(categoria);
+    }
+
+    private void validarPropriedade(Categoria categoria, Usuario usuario) {
+        if (usuario.getCasal() == null || !categoria.getCasal().getId().equals(usuario.getCasal().getId())) {
+            throw new ForbiddenException("Acesso negado a esta categoria");
+        }
     }
 }

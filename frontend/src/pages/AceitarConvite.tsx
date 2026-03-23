@@ -6,7 +6,6 @@ import { api } from '../api/axios';
 interface ConviteInfo {
   nomeParceiro1: string;
   emailConvidado: string;
-  casalId: number;
   expirado: boolean;
   usado: boolean;
 }

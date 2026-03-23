@@ -22,8 +22,13 @@ export const Register = () => {
       return;
     }
 
-    if (senha.length < 6) {
-      toast.error('A senha deve ter no mínimo 6 caracteres!');
+    if (senha.length < 8) {
+      toast.error('A senha deve ter no mínimo 8 caracteres!');
+      return;
+    }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(senha)) {
+      toast.error('A senha deve conter ao menos uma letra maiúscula, uma minúscula e um número!');
       return;
     }
 
@@ -110,7 +115,7 @@ export const Register = () => {
             />
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              A senha deve ter no mínimo 6 caracteres
+              A senha deve ter no mínimo 8 caracteres, com letra maiúscula, minúscula e número
             </p>
 
             <button

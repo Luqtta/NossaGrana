@@ -41,13 +41,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = jwtUtil.getEmailFromToken(token);
 
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    boolean userExists = usuarioRepository.existsByEmail(email);
-                    if (userExists) {
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
+                    usuarioRepository.findByEmail(email).ifPresent(usuario -> {
+                        if (Boolean.TRUE.equals(usuario.getEmailVerificado())) {
+                            UsernamePasswordAuthenticationToken authentication =
+                                    new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
+                            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                        }
+                    });
                 }
             }
         } catch (Exception ignored) {
