@@ -6,6 +6,7 @@ import com.nossagrana.backend.repository.CategoriaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -26,7 +27,7 @@ public class CategoriaPadraoService {
         new Object[]{"Impostos", "💰", "#14b8a6"},
         new Object[]{"Outros", "📦", "#64748b"}
     );
-    private static final double ORCAMENTO_PADRAO = 100.0;
+    private static final BigDecimal ORCAMENTO_PADRAO = new BigDecimal("100.00");
 
     public void criarCategoriasPadrao(Casal casal) {
         List<Categoria> categorias = CATEGORIAS_PADRAO.stream()

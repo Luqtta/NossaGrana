@@ -19,6 +19,7 @@ api.interceptors.request.use((config) => {
 // Controle para evitar loop infinito de refresh
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
+let isSyncingUser = false;
 
 const processQueue = (error: unknown, token: string | null) => {
   failedQueue.forEach((p) => {
@@ -29,6 +30,7 @@ const processQueue = (error: unknown, token: string | null) => {
 };
 
 // Interceptor de resposta: renova o token automaticamente em caso de 401
+// e sincroniza dados do usuário em caso de 403 (ex: casalId desatualizado após remoção remota)
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -81,6 +83,36 @@ api.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    }
+
+    // 403: dados do usuário desatualizados (ex: parceiro removido remotamente)
+    // Busca dados frescos do backend e recarrega a página uma única vez
+    if (
+      error.response?.status === 403 &&
+      !isSyncingUser &&
+      !originalRequest.url?.includes('/usuarios/me') &&
+      !originalRequest.url?.includes('/auth/')
+    ) {
+      isSyncingUser = true;
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const meResponse = await axios.get(
+            `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/usuarios/me`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+          localStorage.setItem('user', JSON.stringify({ ...currentUser, ...meResponse.data }));
+          window.location.reload();
+        } else {
+          localStorage.clear();
+          window.location.href = '/login';
+        }
+      } catch {
+        localStorage.clear();
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);

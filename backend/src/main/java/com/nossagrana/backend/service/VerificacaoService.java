@@ -27,8 +27,8 @@ public class VerificacaoService {
     private final PasswordEncoder passwordEncoder;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    private static final String CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-    private static final int CODIGO_TAMANHO = 8;
+    private static final String CHARS = "0123456789";
+    private static final int CODIGO_TAMANHO = 6;
     private static final int MAX_TENTATIVAS = 5;
 
     private String gerarCodigo() {
