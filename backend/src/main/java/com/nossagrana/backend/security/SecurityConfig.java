@@ -61,9 +61,9 @@ public class SecurityConfig {
             "http://localhost:5173",
             frontendUrl
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization", "Content-Type", "Accept", "X-Requested-With"
+            "Authorization", "Content-Type", "Accept", "X-Requested-With", "x-user-id"
         ));
         configuration.setAllowCredentials(true);
 
