@@ -110,7 +110,7 @@ export const Historico = () => {
   const exportarCSV = () => {
     const headers = ['Data', 'Descrição', 'Categoria', 'Responsável', 'Tipo', 'Método', 'Valor'];
     const rows = despesas.map(d => [
-      new Date(d.dataTransacao).toLocaleDateString('pt-BR'),
+      new Date(d.dataTransacao + 'T00:00:00').toLocaleDateString('pt-BR'),
       `"${d.descricao.replace(/"/g, '""')}"`,
       d.categoriaNome,
       getResponsavelNome(d.responsavel),
@@ -349,7 +349,7 @@ export const Historico = () => {
                             </div>
                           </div>
                           <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
-                            <span>📅 {new Date(despesa.dataTransacao).toLocaleDateString('pt-BR')}</span>
+                            <span>📅 {new Date(despesa.dataTransacao + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                             <span>👤 {getResponsavelNome(despesa.responsavel)}</span>
                             <span className={`px-2 py-0.5 rounded ${
                               despesa.tipoDespesa === 'FIXA' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :

@@ -20,7 +20,7 @@ export const NovaDespesa = () => {
   const [comprovantePreview, setComprovantePreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<DespesaRequest>({
-    dataTransacao: new Date().toISOString().split('T')[0],
+    dataTransacao: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(),
     descricao: '',
     valor: 0,
     categoriaId: 0,
