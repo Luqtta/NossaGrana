@@ -61,6 +61,7 @@ public interface DespesaRepository extends JpaRepository<Despesa, Long> {
            "WHERE d.casal.id = :casalId " +
            "AND (:categoriaId IS NULL OR d.categoria.id = :categoriaId) " +
            "AND (:responsavel IS NULL OR d.responsavel = :responsavel) " +
+           "AND (:tipoDespesa IS NULL OR d.tipoDespesa = :tipoDespesa) " +
            "AND (:descricaoPattern IS NULL OR LOWER(d.descricao) LIKE :descricaoPattern) " +
            "AND d.dataTransacao BETWEEN :dataInicio AND :dataFim " +
            "ORDER BY d.dataTransacao DESC")
@@ -68,8 +69,25 @@ public interface DespesaRepository extends JpaRepository<Despesa, Long> {
         @Param("casalId") Long casalId,
         @Param("categoriaId") Long categoriaId,
         @Param("responsavel") String responsavel,
+        @Param("tipoDespesa") String tipoDespesa,
         @Param("descricaoPattern") String descricaoPattern,
         @Param("dataInicio") LocalDate dataInicio,
         @Param("dataFim") LocalDate dataFim
+    );
+
+    // Busca todas as despesas-origem recorrentes ativas para o scheduler
+    @Query("SELECT d FROM Despesa d JOIN FETCH d.categoria JOIN FETCH d.usuario JOIN FETCH d.casal " +
+           "WHERE d.recorrente = true AND d.recorrenciaAtiva = true AND d.despesaOrigemId IS NULL")
+    List<Despesa> findAllRecorrentesAtivas();
+
+    // Verifica se já existe uma instância gerada para um mês/ano específico de uma origem
+    @Query("SELECT COUNT(d) > 0 FROM Despesa d " +
+           "WHERE d.despesaOrigemId = :origemId " +
+           "AND YEAR(d.dataTransacao) = :ano " +
+           "AND MONTH(d.dataTransacao) = :mes")
+    boolean existeInstanciaParaMes(
+        @Param("origemId") Long origemId,
+        @Param("mes") int mes,
+        @Param("ano") int ano
     );
 }

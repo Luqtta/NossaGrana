@@ -35,6 +35,7 @@ export const Historico = () => {
 
   const [despesaEditando, setDespesaEditando] = useState<Despesa | null>(null);
   const [despesaDeletando, setDespesaDeletando] = useState<Despesa | null>(null);
+  const [despesaCancelando, setDespesaCancelando] = useState<Despesa | null>(null);
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [filtros, setFiltros] = useState<FiltrosDespesas>({
@@ -226,7 +227,7 @@ export const Historico = () => {
             </button>
 
             {mostrarFiltros && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
                   <div className="relative">
@@ -266,6 +267,23 @@ export const Historico = () => {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+                  <div className="relative">
+                    <select
+                      value={filtros.tipoDespesa || ''}
+                      onChange={(e) => setFiltros({ ...filtros, tipoDespesa: e.target.value || undefined })}
+                      className="w-full px-3 py-2 pr-8 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-lg focus:border-emerald-500 outline-none appearance-none"
+                    >
+                      <option value="">Todos</option>
+                      <option value="FIXA">Fixa</option>
+                      <option value="VARIAVEL">Variável</option>
+                      <option value="IMPREVISTA">Imprevista</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500 dark:text-gray-400">▾</div>
+                  </div>
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar</label>
                   <input
                     type="text"
@@ -294,7 +312,7 @@ export const Historico = () => {
                   </div>
                 </div>
 
-                <div className="md:col-span-4 flex gap-2 justify-end">
+                <div className="md:col-span-3 lg:col-span-5 flex gap-2 justify-end">
                   <button
                     onClick={limparFiltros}
                     className="border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
@@ -341,6 +359,16 @@ export const Historico = () => {
                                 {despesa.editada && (
                                   <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 px-2 py-0.5 rounded">Editada</span>
                                 )}
+                                {despesa.recorrente && despesa.recorrenciaAtiva && (
+                                  <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded flex items-center gap-1">
+                                    🔁 Recorrente
+                                  </span>
+                                )}
+                                {despesa.recorrente && !despesa.recorrenciaAtiva && (
+                                  <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded flex items-center gap-1">
+                                    ⏹ Cancelada
+                                  </span>
+                                )}
                               </div>
                               <p className="text-sm text-gray-600 dark:text-gray-400">{despesa.categoriaNome}</p>
                               {despesa.observacoes && (
@@ -374,7 +402,15 @@ export const Historico = () => {
                             R$ {formatBRL(Number(despesa.valor))}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{despesa.usuarioNome}</p>
-                          <div className="flex gap-2 justify-end">
+                          <div className="flex gap-2 justify-end flex-wrap">
+                            {despesa.recorrente && despesa.recorrenciaAtiva && (
+                              <button
+                                onClick={() => setDespesaCancelando(despesa)}
+                                className="text-xs text-orange-600 dark:text-orange-400 px-2 py-1 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition"
+                              >
+                                ⏹ Cancelar recorrência
+                              </button>
+                            )}
                             <button
                               onClick={() => setDespesaEditando(despesa)}
                               className="text-xs text-blue-600 dark:text-blue-400 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
@@ -449,6 +485,26 @@ export const Historico = () => {
         message={`Tem certeza que deseja deletar "${despesaDeletando?.descricao}"? Esta ação não pode ser desfeita.`}
         confirmText="Deletar"
         confirmColor="red"
+      />
+
+      <Modal
+        isOpen={!!despesaCancelando}
+        onClose={() => setDespesaCancelando(null)}
+        onConfirm={async () => {
+          if (!despesaCancelando) return;
+          try {
+            await despesasApi.cancelarRecorrencia(despesaCancelando.id);
+            toast.success('Recorrência cancelada! As despesas já geradas foram mantidas no histórico.');
+            setDespesaCancelando(null);
+            carregarDados();
+          } catch {
+            toast.error('Erro ao cancelar recorrência');
+          }
+        }}
+        title="Cancelar Recorrência?"
+        message={`A despesa "${despesaCancelando?.descricao}" deixará de ser gerada automaticamente a partir do próximo mês. As ocorrências já registradas serão mantidas no histórico.`}
+        confirmText="Cancelar recorrência"
+        confirmColor="orange"
       />
     </div>
   );

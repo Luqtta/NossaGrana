@@ -70,4 +70,18 @@ public class Despesa {
     @Builder.Default
     @Column(name = "ativo", nullable = false)
     private Boolean ativo = true;
+
+    @Builder.Default
+    @Column(name = "recorrente", nullable = false)
+    private Boolean recorrente = false;
+
+    @Builder.Default
+    @Column(name = "recorrencia_ativa", nullable = false)
+    private Boolean recorrenciaAtiva = true;
+
+    @Column(name = "data_cancelamento_recorrencia")
+    private LocalDate dataCancelamentoRecorrencia;
+
+    @Column(name = "despesa_origem_id")
+    private Long despesaOrigemId;
 }

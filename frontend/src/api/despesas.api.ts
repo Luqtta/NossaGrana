@@ -12,6 +12,7 @@ const getCasalId = (): number => {
 export interface FiltrosDespesas {
   categoriaId?: number;
   responsavel?: string;
+  tipoDespesa?: string;
   descricao?: string;
   dataInicio: string;
   dataFim: string;
@@ -36,6 +37,11 @@ export const despesasApi = {
 
   deletar: async (id: number): Promise<void> => {
     await api.delete(`/despesas/${id}`);
+  },
+
+  cancelarRecorrencia: async (id: number): Promise<Despesa> => {
+    const response = await api.patch(`/despesas/${id}/cancelar-recorrencia`);
+    return response.data;
   },
 
   buscarHistorico: async (id: number): Promise<HistoricoEdicaoItem[]> => {

@@ -29,4 +29,7 @@ public class DespesaResponse {
     private String usuarioNome;
     private Boolean editada;
     private String urlComprovante;
+    private Boolean recorrente;
+    private Boolean recorrenciaAtiva;
+    private Long despesaOrigemId;
 }

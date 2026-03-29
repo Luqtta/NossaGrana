@@ -303,6 +303,25 @@ export const NovaDespesa = () => {
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400">▾</div>
               </div>
+
+              {/* Card informativo: Despesa Recorrente */}
+              <div
+                className={`mt-3 overflow-hidden transition-all duration-300 ease-in-out ${
+                  formData.tipoDespesa === 'FIXA'
+                    ? 'max-h-40 opacity-100'
+                    : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="p-3 rounded-xl border-2 border-blue-400 bg-blue-50 dark:bg-blue-900/20 flex items-start gap-3">
+                  <span className="text-xl mt-0.5">🔁</span>
+                  <div>
+                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Despesa recorrente</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                      Esta despesa será adicionada automaticamente todo mês no dia 1.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Método de Pagamento */}

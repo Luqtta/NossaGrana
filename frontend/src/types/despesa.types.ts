@@ -36,4 +36,7 @@ export interface Despesa {
   editada?: boolean;
   urlComprovante?: string;
   valorPrevisto?: number;
+  recorrente?: boolean;
+  recorrenciaAtiva?: boolean;
+  despesaOrigemId?: number;
 }

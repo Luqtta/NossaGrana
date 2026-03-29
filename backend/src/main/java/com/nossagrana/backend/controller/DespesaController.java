@@ -53,6 +53,12 @@ public class DespesaController {
         return ResponseEntity.ok("Despesa deletada com sucesso!");
     }
 
+    @PatchMapping("/{id}/cancelar-recorrencia")
+    public ResponseEntity<DespesaResponse> cancelarRecorrencia(@PathVariable Long id) {
+        Usuario usuario = autenticacaoHelper.getUsuarioAtual();
+        return ResponseEntity.ok(despesaService.cancelarRecorrencia(id, usuario.getId()));
+    }
+
     @GetMapping("/{id}/historico")
     public ResponseEntity<List<HistoricoEdicao>> buscarHistorico(@PathVariable Long id) {
         autenticacaoHelper.getUsuarioAtual(); // garante autenticação
@@ -64,12 +70,13 @@ public class DespesaController {
             @RequestParam Long casalId,
             @RequestParam(required = false) Long categoriaId,
             @RequestParam(required = false) String responsavel,
+            @RequestParam(required = false) String tipoDespesa,
             @RequestParam(required = false) String descricao,
             @RequestParam String dataInicio,
             @RequestParam String dataFim) {
         autenticacaoHelper.validarAcessoCasal(casalId);
         LocalDate inicio = LocalDate.parse(dataInicio);
         LocalDate fim = LocalDate.parse(dataFim);
-        return ResponseEntity.ok(despesaService.filtrar(casalId, categoriaId, responsavel, descricao, inicio, fim));
+        return ResponseEntity.ok(despesaService.filtrar(casalId, categoriaId, responsavel, tipoDespesa, descricao, inicio, fim));
     }
 }
