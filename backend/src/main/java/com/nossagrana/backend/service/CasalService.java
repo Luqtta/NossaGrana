@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -98,52 +99,46 @@ public class CasalService {
         casalRepository.save(casal);
     }
     
-    public void definirMeta(Long casalId, Double metaMensal) {
+    public void definirMeta(Long casalId, BigDecimal metaMensal) {
         Casal casal = casalRepository.findById(casalId)
             .orElseThrow(() -> new RuntimeException("Casal não encontrado"));
-        
+
         casal.setMetaMensal(metaMensal);
-        
+
         casalRepository.save(casal);
     }
-    
+
     public Map<String, Object> buscarEstatisticas(Long casalId, int mes, int ano) {
         Casal casal = casalRepository.findById(casalId)
             .orElseThrow(() -> new RuntimeException("Casal não encontrado"));
-        
-        // Calcular primeiro e último dia do mês
+
         LocalDate primeiroDia = LocalDate.of(ano, mes, 1);
         LocalDate ultimoDia = primeiroDia.withDayOfMonth(primeiroDia.lengthOfMonth());
-        
-        // Buscar todas as despesas do mês
+
         List<Despesa> despesas = despesaRepository.findByCasalIdAndDataTransacaoBetween(
             casalId, primeiroDia, ultimoDia
         );
-        
-        // Calcular totais por parceiro (convertendo BigDecimal pra double)
-        double totalParceiro1 = despesas.stream()
+
+        BigDecimal totalParceiro1 = despesas.stream()
             .filter(d -> "PARCEIRO_1".equals(d.getResponsavel()))
-            .mapToDouble(d -> d.getValor().doubleValue())
-            .sum();
+            .map(Despesa::getValor)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        double totalParceiro2 = despesas.stream()
+        BigDecimal totalParceiro2 = despesas.stream()
             .filter(d -> "PARCEIRO_2".equals(d.getResponsavel()))
-            .mapToDouble(d -> d.getValor().doubleValue())
-            .sum();
+            .map(Despesa::getValor)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        double totalCompartilhado = despesas.stream()
+        BigDecimal totalCompartilhado = despesas.stream()
             .filter(d -> "COMPARTILHADA".equals(d.getResponsavel()))
-            .mapToDouble(d -> d.getValor().doubleValue())
-            .sum();
+            .map(Despesa::getValor)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        double totalGeral = despesas.stream()
-            .mapToDouble(d -> d.getValor().doubleValue())
-            .sum();
-        
-        // Calcular saldo (meta - gasto)
-        double metaMensal = casal.getMetaMensal() != null ? casal.getMetaMensal() : 0.0;
-        double saldo = metaMensal - totalGeral;
-        
+        BigDecimal totalGeral = totalParceiro1.add(totalParceiro2).add(totalCompartilhado);
+
+        BigDecimal metaMensal = casal.getMetaMensal() != null ? casal.getMetaMensal() : BigDecimal.ZERO;
+        BigDecimal saldo = metaMensal.subtract(totalGeral);
+
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalParceiro1", totalParceiro1);
         stats.put("totalParceiro2", totalParceiro2);
@@ -153,7 +148,7 @@ public class CasalService {
         stats.put("saldo", saldo);
         stats.put("nomeParceiro1", casal.getNomeParceiro1() != null ? casal.getNomeParceiro1() : "Parceiro 1");
         stats.put("nomeParceiro2", casal.getNomeParceiro2() != null ? casal.getNomeParceiro2() : "Parceiro 2");
-        
+
         return stats;
     }
 }

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 @RestController
@@ -42,7 +43,7 @@ public class CasalController {
     @PutMapping("/{casalId}/meta")
     public ResponseEntity<String> definirMeta(
             @PathVariable Long casalId,
-            @RequestBody Map<String, Double> request) {
+            @RequestBody Map<String, BigDecimal> request) {
         autenticacaoHelper.validarAcessoCasal(casalId);
         casalService.definirMeta(casalId, request.get("metaMensal"));
         return ResponseEntity.ok("Meta definida com sucesso!");

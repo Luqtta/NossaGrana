@@ -13,6 +13,7 @@ import com.nossagrana.backend.repository.DespesaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class CategoriaService {
             .build();
     }
 
-    public void definirOrcamento(Long categoriaId, Double orcamento, Usuario usuario) {
+    public void definirOrcamento(Long categoriaId, BigDecimal orcamento, Usuario usuario) {
         Categoria categoria = categoriaRepository.findById(categoriaId)
             .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
         validarPropriedade(categoria, usuario);
@@ -63,16 +64,20 @@ public class CategoriaService {
             categoria.getCasal().getId(), categoriaId, primeiroDia, ultimoDia
         );
 
-        double totalGasto = despesas.stream()
-            .mapToDouble(d -> d.getValor().doubleValue())
-            .sum();
+        BigDecimal totalGasto = despesas.stream()
+            .map(Despesa::getValor)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        double orcamento = categoria.getOrcamentoMensal() != null ? categoria.getOrcamentoMensal() : 0.0;
-        double saldo = orcamento - totalGasto;
-        double percentual = orcamento > 0 ? (totalGasto / orcamento) * 100 : 0;
+        BigDecimal orcamento = categoria.getOrcamentoMensal() != null
+            ? categoria.getOrcamentoMensal()
+            : BigDecimal.ZERO;
+        BigDecimal saldo = orcamento.subtract(totalGasto);
+        double percentual = orcamento.compareTo(BigDecimal.ZERO) > 0
+            ? totalGasto.doubleValue() / orcamento.doubleValue() * 100
+            : 0;
 
         String status;
-        if (saldo < 0) {
+        if (saldo.compareTo(BigDecimal.ZERO) < 0) {
             status = "VERMELHO";
         } else if (percentual >= 80) {
             status = "AMARELO";
@@ -93,7 +98,7 @@ public class CategoriaService {
             .build();
     }
 
-    public Categoria criar(String nome, String icone, String cor, Double orcamento, Long casalId) {
+    public Categoria criar(String nome, String icone, String cor, BigDecimal orcamento, Long casalId) {
         Casal casal = casalRepository.findById(casalId)
             .orElseThrow(() -> new RuntimeException("Casal não encontrado"));
 

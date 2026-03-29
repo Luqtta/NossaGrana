@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -15,9 +16,9 @@ public class SaldoCategoriaResponse {
     private String nomeCategoria;
     private String icone;
     private String cor;
-    private Double orcamentoMensal;
-    private Double totalGasto;
-    private Double saldo;
+    private BigDecimal orcamentoMensal;
+    private BigDecimal totalGasto;
+    private BigDecimal saldo;
     private Double percentualGasto;
     private String status; // VERDE, AMARELO, VERMELHO
 }

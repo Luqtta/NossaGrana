@@ -2,6 +2,7 @@ package com.nossagrana.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "categorias")
@@ -30,8 +31,8 @@ public class Categoria {
     private Boolean ativa = true;
 
     @Builder.Default
-    @Column(name = "orcamento_mensal")
-    private Double orcamentoMensal = 0.0;
+    @Column(name = "orcamento_mensal", precision = 10, scale = 2)
+    private BigDecimal orcamentoMensal = BigDecimal.ZERO;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "casal_id")

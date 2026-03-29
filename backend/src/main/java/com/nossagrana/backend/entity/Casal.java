@@ -2,6 +2,7 @@ package com.nossagrana.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,8 +26,8 @@ public class Casal {
     @Column(name = "convite_aceito")
     private Boolean conviteAceito = false;
     
-    @Column(name = "meta_mensal")
-    private Double metaMensal = 0.0;
+    @Column(name = "meta_mensal", precision = 10, scale = 2)
+    private BigDecimal metaMensal = BigDecimal.ZERO;
     
     @Column(name = "data_criacao")
     private LocalDateTime dataCriacao = LocalDateTime.now();

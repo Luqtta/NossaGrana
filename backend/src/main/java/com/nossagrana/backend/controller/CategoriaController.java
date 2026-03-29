@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -30,9 +31,9 @@ public class CategoriaController {
     @PutMapping("/{categoriaId}/orcamento")
     public ResponseEntity<String> definirOrcamento(
             @PathVariable Long categoriaId,
-            @RequestBody Map<String, Double> request
+            @RequestBody Map<String, BigDecimal> request
     ) {
-        Double orcamento = request.get("orcamento");
+        BigDecimal orcamento = request.get("orcamento");
         categoriaService.definirOrcamento(categoriaId, orcamento, autenticacaoHelper.getUsuarioAtual());
         return ResponseEntity.ok("Orçamento definido com sucesso!");
     }
@@ -51,7 +52,7 @@ public class CategoriaController {
         String nome = (String) request.get("nome");
         String icone = (String) request.get("icone");
         String cor = (String) request.get("cor");
-        Double orcamento = ((Number) request.get("orcamento")).doubleValue();
+        BigDecimal orcamento = new BigDecimal(request.get("orcamento").toString());
         Long casalId = ((Number) request.get("casalId")).longValue();
         autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(categoriaService.criar(nome, icone, cor, orcamento, casalId));

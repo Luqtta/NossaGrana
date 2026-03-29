@@ -7,6 +7,7 @@ import { formatBRL } from '../utils/formatBRL';
 import { Modal } from '../components/Modal';
 import { Sidebar } from '../components/Sidebar';
 import { CurrencyInput } from '../components/CurrencyInput';
+import { EmojiPickerInput } from '../components/EmojiPickerInput';
 import type { Categoria } from '../types/despesa.types';
 
 interface CategoriaComSaldo extends Categoria {
@@ -347,16 +348,10 @@ export const Categorias = () => {
 
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Nova Categoria</h3>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Emoji / Ícone</label>
-                <input
-                  type="text"
-                  value={formCategoria.icone}
-                  onChange={(e) => setFormCategoria({ ...formCategoria, icone: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:border-emerald-500 outline-none"
-                  placeholder="Ex: 🍕"
-                />
-              </div>
+              <EmojiPickerInput
+                value={formCategoria.icone}
+                onChange={(emoji) => setFormCategoria({ ...formCategoria, icone: emoji })}
+              />
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nome</label>
                 <input
@@ -414,15 +409,10 @@ export const Categorias = () => {
 
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Editar Categoria</h3>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Emoji / Ícone</label>
-                <input
-                  type="text"
-                  value={formCategoria.icone}
-                  onChange={(e) => setFormCategoria({ ...formCategoria, icone: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:border-emerald-500 outline-none"
-                />
-              </div>
+              <EmojiPickerInput
+                value={formCategoria.icone}
+                onChange={(emoji) => setFormCategoria({ ...formCategoria, icone: emoji })}
+              />
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nome</label>
                 <input
