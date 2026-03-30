@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, History, FileText, Settings, LogOut, Tag, Plus, Menu, X } from 'lucide-react';
+import { Home, History, FileText, Settings, LogOut, Tag, Plus, Menu, X, ArrowRightLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -25,6 +25,7 @@ export const Sidebar = ({ onLogout }: SidebarProps) => {
     { icon: Plus, label: 'Nova Despesa', path: '/nova-despesa' },
     { icon: History, label: 'Histórico', path: '/historico' },
     { icon: Tag, label: 'Categorias', path: '/categorias' },
+    { icon: ArrowRightLeft, label: 'Compensações', path: '/compensacoes' },
     { icon: FileText, label: 'Relatórios', path: '/relatorios' },
     { icon: Settings, label: 'Configurações', path: '/configuracoes' },
   ];

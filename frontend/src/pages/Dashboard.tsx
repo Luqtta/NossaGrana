@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Settings } from 'lucide-react';
+import { Settings, ArrowRightLeft } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import { SkeletonCard } from '../components/SkeletonCard';
 import { despesasApi } from '../api/despesas.api';
 import { categoriasApi } from '../api/categorias.api';
 import { casalApi } from '../api/casal.api';
+import { compensacoesApi } from '../api/compensacoes.api';
 import type { EstatisticasData, CasalData } from '../api/casal.api';
 import type { Despesa, Categoria } from '../types/despesa.types';
+import type { AcertoMensalResponse } from '../types/compensacao.types';
 import { formatBRL } from '../utils/formatBRL';
 import { CurrencyInput } from '../components/CurrencyInput';
 
@@ -19,6 +21,7 @@ export const Dashboard = () => {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [estatisticas, setEstatisticas] = useState<EstatisticasData | null>(null);
   const [casal, setCasal] = useState<CasalData | null>(null);
+  const [acerto, setAcerto] = useState<AcertoMensalResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [modoDivisao, setModoDivisao] = useState<'igual' | 'proprio'>('igual');
   const [editMeta, setEditMeta] = useState(false);
@@ -50,17 +53,19 @@ export const Dashboard = () => {
       const mes = new Date().getMonth() + 1;
       const ano = new Date().getFullYear();
 
-      const [despesasData, categoriasData, statsData, casalData] = await Promise.all([
+      const [despesasData, categoriasData, statsData, casalData, acertoData] = await Promise.all([
         despesasApi.listarPorMes(mes, ano),
         categoriasApi.listarPorCasal(),
         casalApi.buscarEstatisticas(user.casalId, mes, ano),
         casalApi.buscar(user.casalId),
+        compensacoesApi.calcularAcerto(mes, ano),
       ]);
 
       setDespesas(despesasData);
       setCategorias(categoriasData);
       setEstatisticas(statsData);
       setCasal(casalData);
+      setAcerto(acertoData);
     } catch (error) {
       toast.error('Erro ao carregar dados');
     } finally {
@@ -489,6 +494,101 @@ export const Dashboard = () => {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Acerto do Mês */}
+          {!isSolo && acerto && !acerto.solo && (
+            <div
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 opacity-0"
+              style={{ animation: 'fadeInUp 0.6s ease-out 0.5s forwards' }}
+            >
+              <div className="flex items-center gap-2 mb-5">
+                <ArrowRightLeft size={18} className="text-emerald-500" />
+                <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                  Acerto do Mês
+                </h3>
+                <span className="ml-auto text-xs text-gray-400 dark:text-gray-500 italic">
+                  Baseado em despesas + compensações
+                </span>
+              </div>
+
+              {/* Detalhes por parceiro */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                {[acerto.parceiro1, acerto.parceiro2].filter(Boolean).map((p) => {
+                  if (!p) return null;
+                  const positivo = p.saldoFinal >= 0;
+                  return (
+                    <div
+                      key={p.usuarioId}
+                      className={`rounded-xl p-4 border ${
+                        positivo
+                          ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                          : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                      }`}
+                    >
+                      <p className={`text-sm font-semibold mb-3 ${positivo ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+                        {p.nome}
+                      </p>
+                      <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex justify-between">
+                          <span>Despesas pagas</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
+                        </div>
+                        {p.compensacoesConcedidas > 0 && (
+                          <div className="flex justify-between">
+                            <span>Compensações concedidas</span>
+                            <span className="font-medium text-blue-600 dark:text-blue-400">+ R$ {formatBRL(p.compensacoesConcedidas)}</span>
+                          </div>
+                        )}
+                        {p.compensacoesRecebidas > 0 && (
+                          <div className="flex justify-between">
+                            <span>Compensações recebidas</span>
+                            <span className="font-medium text-violet-600 dark:text-violet-400">− R$ {formatBRL(p.compensacoesRecebidas)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
+                          <span className="font-medium">Valor líquido arcado</span>
+                          <span className="font-bold text-gray-900 dark:text-white">R$ {formatBRL(p.valorLiquidoArcado)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Cota ideal</span>
+                          <span>R$ {formatBRL(acerto.cotaIdeal)}</span>
+                        </div>
+                      </div>
+                      <div className={`mt-3 text-right text-base font-bold ${positivo ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+                        {positivo ? '+' : ''}R$ {formatBRL(p.saldoFinal)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Resultado final */}
+              {acerto.resumoFinal && (
+                <div className={`rounded-xl p-4 text-center ${
+                  acerto.resumoFinal.equilibrado
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
+                    : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
+                }`}>
+                  {acerto.resumoFinal.equilibrado ? (
+                    <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
+                      Sem acerto pendente — estão quites neste mês!
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Resultado</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">
+                        <span className="text-red-600 dark:text-red-400">{acerto.resumoFinal.quemDeve}</span>
+                        {' deve '}
+                        <span className="text-emerald-600 dark:text-emerald-400">R$ {formatBRL(acerto.resumoFinal.valor)}</span>
+                        {' para '}
+                        <span className="text-emerald-600 dark:text-emerald-400">{acerto.resumoFinal.paraQuem}</span>
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

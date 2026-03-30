@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -47,6 +48,12 @@ public class CasalController {
         autenticacaoHelper.validarAcessoCasal(casalId);
         casalService.definirMeta(casalId, request.get("metaMensal"));
         return ResponseEntity.ok("Meta definida com sucesso!");
+    }
+
+    @GetMapping("/{casalId}/membros")
+    public ResponseEntity<List<Map<String, Object>>> buscarMembros(@PathVariable Long casalId) {
+        autenticacaoHelper.validarAcessoCasal(casalId);
+        return ResponseEntity.ok(casalService.buscarMembros(casalId));
     }
 
     @GetMapping("/{casalId}/estatisticas")

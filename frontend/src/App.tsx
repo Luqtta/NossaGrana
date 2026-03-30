@@ -10,6 +10,7 @@ import { Historico } from './pages/Historico';
 import { Configuracoes } from './pages/Configuracoes';
 import { Categorias } from './pages/Categorias';
 import { Relatorios } from './pages/Relatorios';
+import { Compensacoes } from './pages/Compensacoes';
 import { AceitarConvite } from './pages/AceitarConvite';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -30,6 +31,7 @@ function AppRoutes() {
       <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
       <Route path="/categorias" element={<ProtectedRoute><Categorias /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+      <Route path="/compensacoes" element={<ProtectedRoute><Compensacoes /></ProtectedRoute>} />
       <Route path="/convite/:codigo" element={<AceitarConvite />} />
       <Route path="/" element={<Navigate to="/dashboard" />} />
     </Routes>

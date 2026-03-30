@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +107,28 @@ public class CasalService {
         casal.setMetaMensal(metaMensal);
 
         casalRepository.save(casal);
+    }
+
+    public List<Map<String, Object>> buscarMembros(Long casalId) {
+        List<Map<String, Object>> membros = new ArrayList<>();
+
+        usuarioRepository.findFirstByCasalIdAndEhParceiro1(casalId, true).ifPresent(u -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", u.getId());
+            m.put("nome", u.getNome());
+            m.put("ehParceiro1", true);
+            membros.add(m);
+        });
+
+        usuarioRepository.findFirstByCasalIdAndEhParceiro1(casalId, false).ifPresent(u -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", u.getId());
+            m.put("nome", u.getNome());
+            m.put("ehParceiro1", false);
+            membros.add(m);
+        });
+
+        return membros;
     }
 
     public Map<String, Object> buscarEstatisticas(Long casalId, int mes, int ano) {
