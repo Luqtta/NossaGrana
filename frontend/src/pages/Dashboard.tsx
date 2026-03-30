@@ -532,7 +532,7 @@ export const Dashboard = () => {
                       </p>
                       <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex justify-between">
-                          <span>Despesas pagas</span>
+                          <span>Cota base (50/50)</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
                         </div>
                         {p.compensacoesConcedidas > 0 && (

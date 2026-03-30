@@ -137,11 +137,6 @@ public class CompensacaoService {
         BigDecimal totalComp = somaPor(despesas, "COMPARTILHADA");
         BigDecimal totalDespesas = totalP1.add(totalP2).add(totalComp);
 
-        // Despesas pagas por cada parceiro (inclui metade do compartilhado)
-        BigDecimal metadeComp = totalComp.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
-        BigDecimal despP1 = totalP1.add(metadeComp);
-        BigDecimal despP2 = totalP2.add(metadeComp);
-
         // Compensações do mês
         List<Compensacao> compensacoes = compensacaoRepository.findByCasalIdAndPeriodo(casalId, inicio, fim);
 
@@ -152,8 +147,10 @@ public class CompensacaoService {
 
         BigDecimal cotaIdeal = totalDespesas.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
 
-        BigDecimal liquidoP1 = despP1.add(concP1).subtract(recP1);
-        BigDecimal liquidoP2 = despP2.add(concP2).subtract(recP2);
+        // Base sempre 50/50: sem compensações, ninguém deve nada a ninguém.
+        // Compensações são o único fator que cria desequilíbrio no acerto.
+        BigDecimal liquidoP1 = cotaIdeal.add(concP1).subtract(recP1);
+        BigDecimal liquidoP2 = cotaIdeal.add(concP2).subtract(recP2);
 
         BigDecimal saldoP1 = liquidoP1.subtract(cotaIdeal);
         BigDecimal saldoP2 = liquidoP2.subtract(cotaIdeal);
@@ -167,7 +164,7 @@ public class CompensacaoService {
                 .parceiro1(ParceiroAcerto.builder()
                         .usuarioId(p1.getId())
                         .nome(p1.getNome())
-                        .despesasPagas(despP1)
+                        .despesasPagas(cotaIdeal)
                         .compensacoesConcedidas(concP1)
                         .compensacoesRecebidas(recP1)
                         .valorLiquidoArcado(liquidoP1)
@@ -176,7 +173,7 @@ public class CompensacaoService {
                 .parceiro2(ParceiroAcerto.builder()
                         .usuarioId(p2.getId())
                         .nome(p2.getNome())
-                        .despesasPagas(despP2)
+                        .despesasPagas(cotaIdeal)
                         .compensacoesConcedidas(concP2)
                         .compensacoesRecebidas(recP2)
                         .valorLiquidoArcado(liquidoP2)
