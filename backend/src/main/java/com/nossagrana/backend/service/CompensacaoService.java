@@ -5,6 +5,7 @@ import com.nossagrana.backend.dto.AcertoMensalResponse.ParceiroAcerto;
 import com.nossagrana.backend.dto.AcertoMensalResponse.ResumoFinal;
 import com.nossagrana.backend.dto.CompensacaoRequest;
 import com.nossagrana.backend.dto.CompensacaoResponse;
+import com.nossagrana.backend.entity.Casal;
 import com.nossagrana.backend.entity.Compensacao;
 import com.nossagrana.backend.entity.Despesa;
 import com.nossagrana.backend.entity.Usuario;
