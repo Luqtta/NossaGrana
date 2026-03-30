@@ -60,7 +60,6 @@ export const Compensacoes = () => {
   const [salvando, setSalvando] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const handleLogout = () => {
     localStorage.clear();
