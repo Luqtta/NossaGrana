@@ -532,28 +532,24 @@ export const Dashboard = () => {
                       </p>
                       <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex justify-between">
-                          <span>Cota base (50/50)</span>
+                          <span>Cota ideal (50/50)</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(acerto.cotaIdeal)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Compensações concedidas</span>
+                          <span className="font-medium text-blue-600 dark:text-blue-400">+ R$ {formatBRL(p.compensacoesConcedidas)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Valor pago/gasto no mês</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
                         </div>
-                        {p.compensacoesConcedidas > 0 && (
-                          <div className="flex justify-between">
-                            <span>Compensações concedidas</span>
-                            <span className="font-medium text-blue-600 dark:text-blue-400">+ R$ {formatBRL(p.compensacoesConcedidas)}</span>
-                          </div>
-                        )}
-                        {p.compensacoesRecebidas > 0 && (
-                          <div className="flex justify-between">
-                            <span>Compensações recebidas</span>
-                            <span className="font-medium text-violet-600 dark:text-violet-400">− R$ {formatBRL(p.compensacoesRecebidas)}</span>
-                          </div>
-                        )}
+                        <div className="flex justify-between">
+                          <span>Compensações recebidas</span>
+                          <span className="font-medium text-violet-600 dark:text-violet-400">− R$ {formatBRL(p.compensacoesRecebidas)}</span>
+                        </div>
                         <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
                           <span className="font-medium">Valor líquido arcado</span>
                           <span className="font-bold text-gray-900 dark:text-white">R$ {formatBRL(p.valorLiquidoArcado)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Cota ideal</span>
-                          <span>R$ {formatBRL(acerto.cotaIdeal)}</span>
                         </div>
                       </div>
                       <div className={`mt-3 text-right text-base font-bold ${positivo ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
@@ -582,7 +578,7 @@ export const Dashboard = () => {
                         <span className="text-red-600 dark:text-red-400">{acerto.resumoFinal.quemDeve}</span>
                         {' deve '}
                         <span className="text-emerald-600 dark:text-emerald-400">R$ {formatBRL(acerto.resumoFinal.valor)}</span>
-                        {' para '}
+                        {' ao '}
                         <span className="text-emerald-600 dark:text-emerald-400">{acerto.resumoFinal.paraQuem}</span>
                       </p>
                     </>

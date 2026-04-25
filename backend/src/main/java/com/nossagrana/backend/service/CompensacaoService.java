@@ -145,12 +145,13 @@ public class CompensacaoService {
         BigDecimal concP2 = somaCompensacoes(compensacoes, p2.getId(), true);
         BigDecimal recP2 = somaCompensacoes(compensacoes, p2.getId(), false);
 
-        BigDecimal cotaIdeal = totalDespesas.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+        BigDecimal cotaIdeal = totalP1.add(totalP2).divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+        BigDecimal gastoMesP1 = totalP1;
+        BigDecimal gastoMesP2 = totalP2;
 
-        // Base sempre 50/50: sem compensações, ninguém deve nada a ninguém.
-        // Compensações são o único fator que cria desequilíbrio no acerto.
-        BigDecimal liquidoP1 = cotaIdeal.add(concP1).subtract(recP1);
-        BigDecimal liquidoP2 = cotaIdeal.add(concP2).subtract(recP2);
+        // Valor liquido arcado = gasto no mes + compensacoes liquidas (concedidas - recebidas)
+        BigDecimal liquidoP1 = gastoMesP1.add(concP1.subtract(recP1));
+        BigDecimal liquidoP2 = gastoMesP2.add(concP2.subtract(recP2));
 
         BigDecimal saldoP1 = liquidoP1.subtract(cotaIdeal);
         BigDecimal saldoP2 = liquidoP2.subtract(cotaIdeal);
@@ -164,7 +165,7 @@ public class CompensacaoService {
                 .parceiro1(ParceiroAcerto.builder()
                         .usuarioId(p1.getId())
                         .nome(p1.getNome())
-                        .despesasPagas(cotaIdeal)
+                        .despesasPagas(gastoMesP1)
                         .compensacoesConcedidas(concP1)
                         .compensacoesRecebidas(recP1)
                         .valorLiquidoArcado(liquidoP1)
@@ -173,7 +174,7 @@ public class CompensacaoService {
                 .parceiro2(ParceiroAcerto.builder()
                         .usuarioId(p2.getId())
                         .nome(p2.getNome())
-                        .despesasPagas(cotaIdeal)
+                        .despesasPagas(gastoMesP2)
                         .compensacoesConcedidas(concP2)
                         .compensacoesRecebidas(recP2)
                         .valorLiquidoArcado(liquidoP2)
