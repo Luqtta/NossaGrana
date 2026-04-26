@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -145,30 +144,27 @@ public class CompensacaoService {
         BigDecimal concP2 = somaCompensacoes(compensacoes, p2.getId(), true);
         BigDecimal recP2 = somaCompensacoes(compensacoes, p2.getId(), false);
 
-        BigDecimal cotaIdeal = totalP1.add(totalP2).divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
         BigDecimal gastoMesP1 = totalP1;
         BigDecimal gastoMesP2 = totalP2;
 
-        // Valor liquido arcado = gasto no mes + compensacoes liquidas (concedidas - recebidas)
-        BigDecimal liquidoP1 = gastoMesP1.add(concP1.subtract(recP1));
-        BigDecimal liquidoP2 = gastoMesP2.add(concP2.subtract(recP2));
-
-        BigDecimal saldoP1 = liquidoP1.subtract(cotaIdeal);
-        BigDecimal saldoP2 = liquidoP2.subtract(cotaIdeal);
+        // Regra de acerto: somente compensacoes geram "deve".
+        // Sem compensacao no mes, o resultado deve ser quitado.
+        BigDecimal saldoP1 = concP1.subtract(recP1);
+        BigDecimal saldoP2 = concP2.subtract(recP2);
 
         ResumoFinal resumo = calcularResumo(p1.getNome(), p2.getNome(), saldoP1);
 
         return AcertoMensalResponse.builder()
                 .solo(false)
                 .totalDespesasMes(totalDespesas)
-                .cotaIdeal(cotaIdeal)
+                .cotaIdeal(BigDecimal.ZERO)
                 .parceiro1(ParceiroAcerto.builder()
                         .usuarioId(p1.getId())
                         .nome(p1.getNome())
                         .despesasPagas(gastoMesP1)
                         .compensacoesConcedidas(concP1)
                         .compensacoesRecebidas(recP1)
-                        .valorLiquidoArcado(liquidoP1)
+                        .valorLiquidoArcado(saldoP1)
                         .saldoFinal(saldoP1)
                         .build())
                 .parceiro2(ParceiroAcerto.builder()
@@ -177,7 +173,7 @@ public class CompensacaoService {
                         .despesasPagas(gastoMesP2)
                         .compensacoesConcedidas(concP2)
                         .compensacoesRecebidas(recP2)
-                        .valorLiquidoArcado(liquidoP2)
+                        .valorLiquidoArcado(saldoP2)
                         .saldoFinal(saldoP2)
                         .build())
                 .resumoFinal(resumo)

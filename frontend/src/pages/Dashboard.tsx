@@ -509,7 +509,7 @@ export const Dashboard = () => {
                   Acerto do Mês
                 </h3>
                 <span className="ml-auto text-xs text-gray-400 dark:text-gray-500 italic">
-                  Baseado em despesas + compensações
+                  Baseado em compensações lançadas
                 </span>
               </div>
 
@@ -532,23 +532,19 @@ export const Dashboard = () => {
                       </p>
                       <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex justify-between">
-                          <span>Cota ideal (50/50)</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(acerto.cotaIdeal)}</span>
+                          <span>Despesas do mês (informativo)</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Compensações concedidas</span>
                           <span className="font-medium text-blue-600 dark:text-blue-400">+ R$ {formatBRL(p.compensacoesConcedidas)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Valor pago/gasto no mês</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
-                        </div>
-                        <div className="flex justify-between">
                           <span>Compensações recebidas</span>
                           <span className="font-medium text-violet-600 dark:text-violet-400">− R$ {formatBRL(p.compensacoesRecebidas)}</span>
                         </div>
                         <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
-                          <span className="font-medium">Valor líquido arcado</span>
+                          <span className="font-medium">Saldo de compensações</span>
                           <span className="font-bold text-gray-900 dark:text-white">R$ {formatBRL(p.valorLiquidoArcado)}</span>
                         </div>
                       </div>
@@ -569,7 +565,7 @@ export const Dashboard = () => {
                 }`}>
                   {acerto.resumoFinal.equilibrado ? (
                     <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
-                      Sem acerto pendente — estão quites neste mês!
+                      Sem compensação pendente — estão quites neste mês!
                     </p>
                   ) : (
                     <>
