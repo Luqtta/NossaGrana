@@ -533,8 +533,8 @@ export const Dashboard = () => {
               </div>
 
               <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-700/30 p-3 mb-5 text-xs text-gray-600 dark:text-gray-300">
-                <p>Arcado ajustado = gasto no mês + compensações concedidas - compensações recebidas</p>
-                <p>Saldo final = arcado ajustado - cota base (50/50)</p>
+                <p>Arcado ajustado = cota base (50/50) + compensações concedidas - compensações recebidas</p>
+                <p>Saldo final = arcado ajustado - cota ideal (50/50)</p>
               </div>
 
               {/* Detalhes por parceiro */}
@@ -556,8 +556,12 @@ export const Dashboard = () => {
                       </p>
                       <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex justify-between">
-                          <span>Gasto no mês</span>
+                          <span>Gasto no mês (informativo)</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Cota base (50/50)</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(acerto.cotaIdeal)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>+ Compensações concedidas</span>
@@ -572,7 +576,7 @@ export const Dashboard = () => {
                           <span className="font-bold text-gray-900 dark:text-white">R$ {formatBRL(p.valorLiquidoArcado)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>- Cota base (50/50)</span>
+                          <span>- Cota ideal (50/50)</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(acerto.cotaIdeal)}</span>
                         </div>
                         <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">

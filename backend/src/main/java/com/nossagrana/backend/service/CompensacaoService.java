@@ -147,7 +147,10 @@ public class CompensacaoService {
         BigDecimal concP2 = somaCompensacoes(compensacoes, p2.getId(), true);
         BigDecimal recP2 = somaCompensacoes(compensacoes, p2.getId(), false);
         BigDecimal totalCompensacoes = somaTotalCompensacoes(compensacoes);
-        BigDecimal totalLiquidoMes = totalDespesas.subtract(totalCompensacoes);
+
+        // Compensacao e transferencia interna entre parceiros,
+        // nao altera o total financeiro do mes do casal.
+        BigDecimal totalLiquidoMes = totalDespesas;
 
         BigDecimal cotaIdeal = totalDespesas.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
         BigDecimal metadeCompartilhadoP1 = totalComp.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
@@ -155,10 +158,11 @@ public class CompensacaoService {
         BigDecimal gastoMesP1 = totalP1.add(metadeCompartilhadoP1);
         BigDecimal gastoMesP2 = totalP2.add(metadeCompartilhadoP2);
 
-        // Arcado ajustado: gasto no mes + compensacoes concedidas - compensacoes recebidas.
-        // Isso "abate" a compensacao de quem recebeu e soma para quem concedeu.
-        BigDecimal liquidoP1 = gastoMesP1.add(concP1).subtract(recP1);
-        BigDecimal liquidoP2 = gastoMesP2.add(concP2).subtract(recP2);
+        // Arcado ajustado segue a regra do acerto:
+        // base 50/50 + compensacoes concedidas - compensacoes recebidas.
+        // Assim, sem compensacao, ambos ficam quitados.
+        BigDecimal liquidoP1 = cotaIdeal.add(concP1).subtract(recP1);
+        BigDecimal liquidoP2 = cotaIdeal.add(concP2).subtract(recP2);
 
         BigDecimal saldoP1 = liquidoP1.subtract(cotaIdeal);
         BigDecimal saldoP2 = liquidoP2.subtract(cotaIdeal);
