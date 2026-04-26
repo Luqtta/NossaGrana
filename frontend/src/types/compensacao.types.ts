@@ -48,6 +48,8 @@ export interface ParceiroAcerto {
 export interface AcertoMensalResponse {
   solo: boolean;
   totalDespesasMes: number;
+  totalCompensacoesMes: number;
+  totalLiquidoMes: number;
   cotaIdeal: number;
   parceiro1: ParceiroAcerto | null;
   parceiro2: ParceiroAcerto | null;

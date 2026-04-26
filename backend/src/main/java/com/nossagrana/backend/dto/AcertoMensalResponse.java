@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 public class AcertoMensalResponse {
 
     private BigDecimal totalDespesasMes;
+    private BigDecimal totalCompensacoesMes;
+    private BigDecimal totalLiquidoMes;
     private BigDecimal cotaIdeal;
     private ParceiroAcerto parceiro1;
     private ParceiroAcerto parceiro2;

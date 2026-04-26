@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -118,6 +119,8 @@ public class CompensacaoService {
             return AcertoMensalResponse.builder()
                     .solo(true)
                     .totalDespesasMes(BigDecimal.ZERO)
+                    .totalCompensacoesMes(BigDecimal.ZERO)
+                    .totalLiquidoMes(BigDecimal.ZERO)
                     .cotaIdeal(BigDecimal.ZERO)
                     .build();
         }
@@ -143,28 +146,38 @@ public class CompensacaoService {
         BigDecimal recP1 = somaCompensacoes(compensacoes, p1.getId(), false);
         BigDecimal concP2 = somaCompensacoes(compensacoes, p2.getId(), true);
         BigDecimal recP2 = somaCompensacoes(compensacoes, p2.getId(), false);
+        BigDecimal totalCompensacoes = somaTotalCompensacoes(compensacoes);
+        BigDecimal totalLiquidoMes = totalDespesas.subtract(totalCompensacoes);
 
-        BigDecimal gastoMesP1 = totalP1;
-        BigDecimal gastoMesP2 = totalP2;
+        BigDecimal cotaIdeal = totalDespesas.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+        BigDecimal metadeCompartilhadoP1 = totalComp.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+        BigDecimal metadeCompartilhadoP2 = totalComp.subtract(metadeCompartilhadoP1);
+        BigDecimal gastoMesP1 = totalP1.add(metadeCompartilhadoP1);
+        BigDecimal gastoMesP2 = totalP2.add(metadeCompartilhadoP2);
 
-        // Regra de acerto: somente compensacoes geram "deve".
-        // Sem compensacao no mes, o resultado deve ser quitado.
-        BigDecimal saldoP1 = concP1.subtract(recP1);
-        BigDecimal saldoP2 = concP2.subtract(recP2);
+        // Arcado ajustado: gasto no mes + compensacoes concedidas - compensacoes recebidas.
+        // Isso "abate" a compensacao de quem recebeu e soma para quem concedeu.
+        BigDecimal liquidoP1 = gastoMesP1.add(concP1).subtract(recP1);
+        BigDecimal liquidoP2 = gastoMesP2.add(concP2).subtract(recP2);
+
+        BigDecimal saldoP1 = liquidoP1.subtract(cotaIdeal);
+        BigDecimal saldoP2 = liquidoP2.subtract(cotaIdeal);
 
         ResumoFinal resumo = calcularResumo(p1.getNome(), p2.getNome(), saldoP1);
 
         return AcertoMensalResponse.builder()
                 .solo(false)
                 .totalDespesasMes(totalDespesas)
-                .cotaIdeal(BigDecimal.ZERO)
+                .totalCompensacoesMes(totalCompensacoes)
+                .totalLiquidoMes(totalLiquidoMes)
+                .cotaIdeal(cotaIdeal)
                 .parceiro1(ParceiroAcerto.builder()
                         .usuarioId(p1.getId())
                         .nome(p1.getNome())
                         .despesasPagas(gastoMesP1)
                         .compensacoesConcedidas(concP1)
                         .compensacoesRecebidas(recP1)
-                        .valorLiquidoArcado(saldoP1)
+                        .valorLiquidoArcado(liquidoP1)
                         .saldoFinal(saldoP1)
                         .build())
                 .parceiro2(ParceiroAcerto.builder()
@@ -173,7 +186,7 @@ public class CompensacaoService {
                         .despesasPagas(gastoMesP2)
                         .compensacoesConcedidas(concP2)
                         .compensacoesRecebidas(recP2)
-                        .valorLiquidoArcado(saldoP2)
+                        .valorLiquidoArcado(liquidoP2)
                         .saldoFinal(saldoP2)
                         .build())
                 .resumoFinal(resumo)
@@ -194,6 +207,12 @@ public class CompensacaoService {
                 .filter(c -> comoOrigem
                         ? c.getUsuarioOrigem().getId().equals(usuarioId)
                         : c.getUsuarioDestino().getId().equals(usuarioId))
+                .map(Compensacao::getValor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal somaTotalCompensacoes(List<Compensacao> compensacoes) {
+        return compensacoes.stream()
                 .map(Compensacao::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }

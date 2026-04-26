@@ -509,8 +509,32 @@ export const Dashboard = () => {
                   Acerto do Mês
                 </h3>
                 <span className="ml-auto text-xs text-gray-400 dark:text-gray-500 italic">
-                  Baseado em compensações lançadas
+                  50/50 com abatimento das compensações
                 </span>
+              </div>
+
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Total original</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">R$ {formatBRL(acerto.totalDespesasMes || 0)}</p>
+                </div>
+                <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-blue-600 dark:text-blue-300">Compensações</p>
+                  <p className="mt-1 text-sm font-semibold text-blue-700 dark:text-blue-200">R$ {formatBRL(acerto.totalCompensacoesMes || 0)}</p>
+                </div>
+                <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-violet-600 dark:text-violet-300">Total líquido</p>
+                  <p className="mt-1 text-sm font-semibold text-violet-700 dark:text-violet-200">R$ {formatBRL(acerto.totalLiquidoMes || 0)}</p>
+                </div>
+                <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Cota base 50/50</p>
+                  <p className="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-200">R$ {formatBRL(acerto.cotaIdeal || 0)}</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-700/30 p-3 mb-5 text-xs text-gray-600 dark:text-gray-300">
+                <p>Arcado ajustado = gasto no mês + compensações concedidas - compensações recebidas</p>
+                <p>Saldo final = arcado ajustado - cota base (50/50)</p>
               </div>
 
               {/* Detalhes por parceiro */}
@@ -532,24 +556,31 @@ export const Dashboard = () => {
                       </p>
                       <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex justify-between">
-                          <span>Despesas do mês (informativo)</span>
+                          <span>Gasto no mês</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Compensações concedidas</span>
+                          <span>+ Compensações concedidas</span>
                           <span className="font-medium text-blue-600 dark:text-blue-400">+ R$ {formatBRL(p.compensacoesConcedidas)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Compensações recebidas</span>
+                          <span>- Compensações recebidas</span>
                           <span className="font-medium text-violet-600 dark:text-violet-400">− R$ {formatBRL(p.compensacoesRecebidas)}</span>
                         </div>
                         <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
-                          <span className="font-medium">Saldo de compensações</span>
+                          <span className="font-medium">= Arcado ajustado</span>
                           <span className="font-bold text-gray-900 dark:text-white">R$ {formatBRL(p.valorLiquidoArcado)}</span>
                         </div>
-                      </div>
-                      <div className={`mt-3 text-right text-base font-bold ${positivo ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-                        {positivo ? '+' : ''}R$ {formatBRL(p.saldoFinal)}
+                        <div className="flex justify-between">
+                          <span>- Cota base (50/50)</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(acerto.cotaIdeal)}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
+                          <span className="font-medium">= Saldo final</span>
+                          <span className={`font-bold ${positivo ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+                            {positivo ? '+' : ''}R$ {formatBRL(p.saldoFinal)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -565,7 +596,7 @@ export const Dashboard = () => {
                 }`}>
                   {acerto.resumoFinal.equilibrado ? (
                     <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
-                      Sem compensação pendente — estão quites neste mês!
+                      Sem acerto pendente — estão quites neste mês!
                     </p>
                   ) : (
                     <>
@@ -574,7 +605,7 @@ export const Dashboard = () => {
                         <span className="text-red-600 dark:text-red-400">{acerto.resumoFinal.quemDeve}</span>
                         {' deve '}
                         <span className="text-emerald-600 dark:text-emerald-400">R$ {formatBRL(acerto.resumoFinal.valor)}</span>
-                        {' ao '}
+                        {' para '}
                         <span className="text-emerald-600 dark:text-emerald-400">{acerto.resumoFinal.paraQuem}</span>
                       </p>
                     </>
