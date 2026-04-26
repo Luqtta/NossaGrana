@@ -503,118 +503,136 @@ export const Dashboard = () => {
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 opacity-0"
               style={{ animation: 'fadeInUp 0.6s ease-out 0.5s forwards' }}
             >
-              <div className="flex items-center gap-2 mb-5">
-                <ArrowRightLeft size={18} className="text-emerald-500" />
-                <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                  Acerto do Mês
-                </h3>
-                <span className="ml-auto text-xs text-gray-400 dark:text-gray-500 italic">
-                  50/50 com abatimento das compensações
+              <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <ArrowRightLeft size={18} className="text-emerald-500" />
+                  <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    Acerto do Mês
+                  </h3>
+                </div>
+                <span className="text-xs text-gray-400 dark:text-gray-500 italic">
+                  somente compensações entram neste cálculo
                 </span>
               </div>
 
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
                 <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Total original</p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">R$ {formatBRL(acerto.totalDespesasMes || 0)}</p>
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Total bruto</p>
+                  <p className="mt-1 text-base font-bold text-gray-900 dark:text-white">R$ {formatBRL(acerto.totalDespesasMes || 0)}</p>
                 </div>
-                <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-blue-600 dark:text-blue-300">Compensações</p>
-                  <p className="mt-1 text-sm font-semibold text-blue-700 dark:text-blue-200">R$ {formatBRL(acerto.totalCompensacoesMes || 0)}</p>
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-amber-600 dark:text-amber-300">Compensação</p>
+                  <p className="mt-1 text-base font-bold text-amber-700 dark:text-amber-200">- R$ {formatBRL(acerto.totalCompensacoesMes || 0)}</p>
                 </div>
-                <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-violet-600 dark:text-violet-300">Total líquido</p>
-                  <p className="mt-1 text-sm font-semibold text-violet-700 dark:text-violet-200">R$ {formatBRL(acerto.totalLiquidoMes || 0)}</p>
+                <div className="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-sky-600 dark:text-sky-300">Total para acerto</p>
+                  <p className="mt-1 text-base font-bold text-sky-700 dark:text-sky-200">R$ {formatBRL(acerto.totalLiquidoMes || 0)}</p>
                 </div>
                 <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Cota base 50/50</p>
-                  <p className="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-200">R$ {formatBRL(acerto.cotaIdeal || 0)}</p>
+                  <p className="text-[11px] uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Cota ideal bruta</p>
+                  <p className="mt-1 text-base font-bold text-emerald-700 dark:text-emerald-200">R$ {formatBRL(acerto.cotaIdeal || 0)}</p>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-700/30 p-3 mb-5 text-xs text-gray-600 dark:text-gray-300">
-                <p>Arcado ajustado = cota base (50/50) + compensações concedidas - compensações recebidas</p>
-                <p>Saldo final = arcado ajustado - cota ideal (50/50)</p>
-              </div>
+              {(acerto.totalCompensacoesMes || 0) <= 0 ? (
+                <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-4 text-center">
+                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                    Sem compensações neste mês. Ninguém deve nada.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    {[acerto.parceiro1, acerto.parceiro2].filter(Boolean).map((p) => {
+                      if (!p) return null;
 
-              {/* Detalhes por parceiro */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                {[acerto.parceiro1, acerto.parceiro2].filter(Boolean).map((p) => {
-                  if (!p) return null;
-                  const positivo = p.saldoFinal >= 0;
-                  return (
-                    <div
-                      key={p.usuarioId}
-                      className={`rounded-xl p-4 border ${
-                        positivo
-                          ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                          : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                      }`}
-                    >
-                      <p className={`text-sm font-semibold mb-3 ${positivo ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-                        {p.nome}
-                      </p>
-                      <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                        <div className="flex justify-between">
-                          <span>Gasto no mês (informativo)</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
+                      const saldo = Number(p.saldoFinal || 0);
+                      const recebe = saldo > 0;
+                      const deve = saldo < 0;
+                      const compensacaoDireta = Number(p.compensacoesConcedidas || 0) - Number(p.compensacoesRecebidas || 0);
+                      const cardClasses = recebe
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                        : deve
+                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                          : 'bg-gray-50 dark:bg-gray-700/30 border-gray-200 dark:border-gray-700';
+                      const titleClasses = recebe
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : deve
+                          ? 'text-red-700 dark:text-red-300'
+                          : 'text-gray-700 dark:text-gray-300';
+                      const compensacaoLabel = compensacaoDireta > 0
+                        ? 'Compensou'
+                        : compensacaoDireta < 0
+                          ? 'Recebeu compensação'
+                          : 'Compensação';
+
+                      return (
+                        <div key={p.usuarioId} className={`rounded-xl p-4 border ${cardClasses}`}>
+                          <div className="flex items-start justify-between gap-3 mb-4">
+                            <p className={`text-sm font-semibold ${titleClasses}`}>{p.nome}</p>
+                            <span className={`text-xs font-semibold ${titleClasses}`}>
+                              {recebe ? 'Recebe' : deve ? 'Deve' : 'Quite'}
+                            </span>
+                          </div>
+
+                          <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                            <div className="flex justify-between gap-3">
+                              <span>Gasto bruto</span>
+                              <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
+                            </div>
+                            <div className="flex justify-between gap-3">
+                              <span>{compensacaoLabel}</span>
+                              <span className="font-medium text-amber-700 dark:text-amber-300">
+                                {compensacaoDireta > 0 ? '+ ' : compensacaoDireta < 0 ? '- ' : ''}
+                                R$ {formatBRL(Math.abs(compensacaoDireta))}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-3 border-t border-gray-200 dark:border-gray-700 pt-2">
+                              <span>Parte usada no acerto</span>
+                              <span className="font-bold text-gray-900 dark:text-white">R$ {formatBRL(p.valorLiquidoArcado)}</span>
+                            </div>
+                            <div className="flex justify-between gap-3">
+                              <span>Cota ideal bruta</span>
+                              <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(acerto.cotaIdeal)}</span>
+                            </div>
+                            <div className="flex justify-between gap-3 border-t border-gray-200 dark:border-gray-700 pt-2">
+                              <span className="font-medium">Saldo final</span>
+                              <span className={`font-bold ${titleClasses}`}>
+                                {recebe ? '+ ' : deve ? '- ' : ''}
+                                R$ {formatBRL(Math.abs(saldo))}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Cota base (50/50)</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(acerto.cotaIdeal)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>+ Compensações concedidas</span>
-                          <span className="font-medium text-blue-600 dark:text-blue-400">+ R$ {formatBRL(p.compensacoesConcedidas)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>- Compensações recebidas</span>
-                          <span className="font-medium text-violet-600 dark:text-violet-400">− R$ {formatBRL(p.compensacoesRecebidas)}</span>
-                        </div>
-                        <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
-                          <span className="font-medium">= Arcado ajustado</span>
-                          <span className="font-bold text-gray-900 dark:text-white">R$ {formatBRL(p.valorLiquidoArcado)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>- Cota ideal (50/50)</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(acerto.cotaIdeal)}</span>
-                        </div>
-                        <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
-                          <span className="font-medium">= Saldo final</span>
-                          <span className={`font-bold ${positivo ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-                            {positivo ? '+' : ''}R$ {formatBRL(p.saldoFinal)}
-                          </span>
-                        </div>
-                      </div>
+                      );
+                    })}
+                  </div>
+
+                  {acerto.resumoFinal && (
+                    <div className={`rounded-xl p-4 text-center ${
+                      acerto.resumoFinal.equilibrado
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
+                        : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
+                    }`}>
+                      {acerto.resumoFinal.equilibrado ? (
+                        <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
+                          Sem acerto pendente. Estão quites neste mês.
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Resultado final</p>
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">
+                            <span className="text-red-600 dark:text-red-400">{acerto.resumoFinal.quemDeve}</span>
+                            {' deve '}
+                            <span className="text-emerald-600 dark:text-emerald-400">R$ {formatBRL(acerto.resumoFinal.valor)}</span>
+                            {' para '}
+                            <span className="text-emerald-600 dark:text-emerald-400">{acerto.resumoFinal.paraQuem}</span>
+                          </p>
+                        </>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Resultado final */}
-              {acerto.resumoFinal && (
-                <div className={`rounded-xl p-4 text-center ${
-                  acerto.resumoFinal.equilibrado
-                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
-                    : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
-                }`}>
-                  {acerto.resumoFinal.equilibrado ? (
-                    <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
-                      Sem acerto pendente — estão quites neste mês!
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Resultado</p>
-                      <p className="text-lg font-bold text-gray-900 dark:text-white">
-                        <span className="text-red-600 dark:text-red-400">{acerto.resumoFinal.quemDeve}</span>
-                        {' deve '}
-                        <span className="text-emerald-600 dark:text-emerald-400">R$ {formatBRL(acerto.resumoFinal.valor)}</span>
-                        {' para '}
-                        <span className="text-emerald-600 dark:text-emerald-400">{acerto.resumoFinal.paraQuem}</span>
-                      </p>
-                    </>
                   )}
-                </div>
+                </>
               )}
             </div>
           )}

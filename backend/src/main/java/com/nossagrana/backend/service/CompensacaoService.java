@@ -146,11 +146,9 @@ public class CompensacaoService {
         BigDecimal recP1 = somaCompensacoes(compensacoes, p1.getId(), false);
         BigDecimal concP2 = somaCompensacoes(compensacoes, p2.getId(), true);
         BigDecimal recP2 = somaCompensacoes(compensacoes, p2.getId(), false);
-        BigDecimal totalCompensacoes = somaTotalCompensacoes(compensacoes);
-
-        // Compensacao e transferencia interna entre parceiros,
-        // nao altera o total financeiro do mes do casal.
-        BigDecimal totalLiquidoMes = totalDespesas;
+        BigDecimal saldoCompensacaoP1 = concP1.subtract(recP1);
+        BigDecimal compensacaoLiquida = saldoCompensacaoP1.abs();
+        BigDecimal totalLiquidoMes = totalDespesas.subtract(compensacaoLiquida);
 
         BigDecimal cotaIdeal = totalDespesas.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
         BigDecimal metadeCompartilhadoP1 = totalComp.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
@@ -158,21 +156,40 @@ public class CompensacaoService {
         BigDecimal gastoMesP1 = totalP1.add(metadeCompartilhadoP1);
         BigDecimal gastoMesP2 = totalP2.add(metadeCompartilhadoP2);
 
-        // Arcado ajustado segue a regra do acerto:
-        // base 50/50 + compensacoes concedidas - compensacoes recebidas.
-        // Assim, sem compensacao, ambos ficam quitados.
-        BigDecimal liquidoP1 = cotaIdeal.add(concP1).subtract(recP1);
-        BigDecimal liquidoP2 = cotaIdeal.add(concP2).subtract(recP2);
+        // No acerto, a compensacao abate somente a parte de quem recebeu.
+        // Sem compensacao, ninguem deve nada mesmo que os gastos brutos sejam diferentes.
+        BigDecimal ajusteRecebidoP1 = saldoCompensacaoP1.compareTo(BigDecimal.ZERO) < 0
+                ? saldoCompensacaoP1.abs()
+                : BigDecimal.ZERO;
+        BigDecimal ajusteRecebidoP2 = saldoCompensacaoP1.compareTo(BigDecimal.ZERO) > 0
+                ? saldoCompensacaoP1
+                : BigDecimal.ZERO;
 
-        BigDecimal saldoP1 = liquidoP1.subtract(cotaIdeal);
-        BigDecimal saldoP2 = liquidoP2.subtract(cotaIdeal);
+        BigDecimal liquidoP1 = gastoMesP1.subtract(ajusteRecebidoP1);
+        BigDecimal liquidoP2 = gastoMesP2.subtract(ajusteRecebidoP2);
+
+        BigDecimal saldoP1 = BigDecimal.ZERO;
+        BigDecimal saldoP2 = BigDecimal.ZERO;
+        BigDecimal threshold = new BigDecimal("0.01");
+
+        if (compensacaoLiquida.abs().compareTo(threshold) >= 0) {
+            if (saldoCompensacaoP1.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal diferencaRecebedor = liquidoP2.subtract(cotaIdeal);
+                saldoP1 = diferencaRecebedor.negate();
+                saldoP2 = diferencaRecebedor;
+            } else {
+                BigDecimal diferencaRecebedor = liquidoP1.subtract(cotaIdeal);
+                saldoP1 = diferencaRecebedor;
+                saldoP2 = diferencaRecebedor.negate();
+            }
+        }
 
         ResumoFinal resumo = calcularResumo(p1.getNome(), p2.getNome(), saldoP1);
 
         return AcertoMensalResponse.builder()
                 .solo(false)
                 .totalDespesasMes(totalDespesas)
-                .totalCompensacoesMes(totalCompensacoes)
+                .totalCompensacoesMes(compensacaoLiquida)
                 .totalLiquidoMes(totalLiquidoMes)
                 .cotaIdeal(cotaIdeal)
                 .parceiro1(ParceiroAcerto.builder()
@@ -211,12 +228,6 @@ public class CompensacaoService {
                 .filter(c -> comoOrigem
                         ? c.getUsuarioOrigem().getId().equals(usuarioId)
                         : c.getUsuarioDestino().getId().equals(usuarioId))
-                .map(Compensacao::getValor)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private BigDecimal somaTotalCompensacoes(List<Compensacao> compensacoes) {
-        return compensacoes.stream()
                 .map(Compensacao::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
