@@ -23,7 +23,6 @@ export const Dashboard = () => {
   const [casal, setCasal] = useState<CasalData | null>(null);
   const [acerto, setAcerto] = useState<AcertoMensalResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [modoDivisao, setModoDivisao] = useState<'igual' | 'proprio'>('igual');
   const [editMeta, setEditMeta] = useState(false);
   const [metaInput, setMetaInput] = useState(0);
   const [salvandoMeta, setSalvandoMeta] = useState(false);
@@ -416,89 +415,6 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          {/* Divisão do Mês */}
-          {!isSolo && estatisticas && (estatisticas.totalGeral || 0) > 0 && (
-            <div
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 opacity-0"
-              style={{ animation: 'fadeInUp 0.6s ease-out 0.45s forwards' }}
-            >
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                  Divisão do Mês
-                </h3>
-
-                <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-xs">
-                  <button
-                    onClick={() => setModoDivisao('igual')}
-                    className={`px-3 py-1.5 font-medium transition ${
-                      modoDivisao === 'igual'
-                        ? 'bg-emerald-600 text-white'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    Total ÷ 2
-                  </button>
-                  <button
-                    onClick={() => setModoDivisao('proprio')}
-                    className={`px-3 py-1.5 font-medium transition ${
-                      modoDivisao === 'proprio'
-                        ? 'bg-emerald-600 text-white'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    Próprio + ½ compartilhado
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  {
-                    nome: estatisticas.nomeParceiro1,
-                    proprio: estatisticas.totalParceiro1 || 0,
-                    cor: 'text-sky-600 dark:text-sky-400',
-                    bg: 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800',
-                  },
-                  {
-                    nome: estatisticas.nomeParceiro2,
-                    proprio: estatisticas.totalParceiro2 || 0,
-                    cor: 'text-violet-600 dark:text-violet-400',
-                    bg: 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800',
-                  },
-                ].map((p) => {
-                  const metadeCompartilhado = (estatisticas.totalCompartilhado || 0) / 2;
-                  const valor = modoDivisao === 'igual'
-                    ? (estatisticas.totalGeral || 0) / 2
-                    : p.proprio + metadeCompartilhado;
-
-                  return (
-                    <div key={p.nome} className={`rounded-xl p-4 border ${p.bg}`}>
-                      <p className={`text-sm font-semibold ${p.cor} mb-1`}>{p.nome}</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        R$ {formatBRL(valor)}
-                      </p>
-
-                      {modoDivisao === 'proprio' && (
-                        <div className="mt-2 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          <p>Próprio: R$ {formatBRL(p.proprio)}</p>
-                          <p>½ compartilhado: R$ {formatBRL(metadeCompartilhado)}</p>
-                        </div>
-                      )}
-
-                      {modoDivisao === 'igual' && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          metade de R$ {formatBRL(estatisticas.totalGeral || 0)}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Acerto do Mês */}
-          {/* Comentário bobo para forçar um novo deploy */}
           {!isSolo && acerto && !acerto.solo && (
             <div
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 opacity-0"
@@ -514,6 +430,29 @@ export const Dashboard = () => {
                 <span className="text-xs text-gray-400 dark:text-gray-500 italic">
                   cálculo em etapas: mês + compensações
                 </span>
+              </div>
+
+              <div className="rounded-xl bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-700 p-4 mb-5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400">Total do mês</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      R$ {formatBRL(Number(acerto.totalDespesasMes || 0))}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400">Cota base por pessoa</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      R$ {formatBRL(Number(acerto.cotaIdeal || 0))}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400">Participantes</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {[acerto.parceiro1, acerto.parceiro2].filter(Boolean).length}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
@@ -553,33 +492,33 @@ export const Dashboard = () => {
                       <div className="flex items-start justify-between gap-3 mb-4">
                         <p className={`text-sm font-semibold ${titleClasses}`}>{p.nome}</p>
                         <span className={`text-xs font-semibold ${titleClasses}`}>
-                          {recebe ? 'A receber' : deve ? 'A pagar' : 'Quite'}
+                          {recebe ? 'A receber' : deve ? 'A pagar' : 'Em dia'}
                         </span>
                       </div>
 
                       <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex justify-between gap-3">
-                          <span>1. Valor pago</span>
+                          <span>Valor pago</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(valorPago)}</span>
                         </div>
                         <div className="flex justify-between gap-3">
-                          <span>2. Cota base (50/50)</span>
+                          <span>Cota base (50/50)</span>
                           <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(cotaBase)}</span>
                         </div>
                         <div className="flex justify-between gap-3 border-t border-gray-200 dark:border-gray-700 pt-2">
-                          <span>3. Valor líquido devido</span>
+                          <span>Valor líquido devido</span>
                           <span className={`font-semibold ${colorByValue(valorLiquidoDevido)}`}>
                             {signedCurrency(valorLiquidoDevido)}
                           </span>
                         </div>
                         <div className="flex justify-between gap-3">
-                          <span>4. Compensações</span>
+                          <span>Compensações</span>
                           <span className={`font-semibold ${colorByValue(compensacoes)}`}>
                             {signedCurrency(compensacoes)}
                           </span>
                         </div>
                         <div className="flex justify-between gap-3 border-t border-gray-200 dark:border-gray-700 pt-2">
-                          <span className="font-medium">5. Valor total devido</span>
+                          <span className="font-medium">Valor total devido</span>
                           <span className={`font-bold ${colorByValue(valorTotalDevido)}`}>
                             {signedCurrency(valorTotalDevido)}
                           </span>
