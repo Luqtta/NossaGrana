@@ -511,129 +511,157 @@ export const Dashboard = () => {
                   </h3>
                 </div>
                 <span className="text-xs text-gray-400 dark:text-gray-500 italic">
-                  somente compensações entram neste cálculo
+                  cálculo em etapas: mês + compensações
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Total bruto</p>
-                  <p className="mt-1 text-base font-bold text-gray-900 dark:text-white">R$ {formatBRL(acerto.totalDespesasMes || 0)}</p>
-                </div>
-                <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-amber-600 dark:text-amber-300">Compensação</p>
-                  <p className="mt-1 text-base font-bold text-amber-700 dark:text-amber-200">- R$ {formatBRL(acerto.totalCompensacoesMes || 0)}</p>
-                </div>
-                <div className="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-sky-600 dark:text-sky-300">Total para acerto</p>
-                  <p className="mt-1 text-base font-bold text-sky-700 dark:text-sky-200">R$ {formatBRL(acerto.totalLiquidoMes || 0)}</p>
-                </div>
-                <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Cota ideal bruta</p>
-                  <p className="mt-1 text-base font-bold text-emerald-700 dark:text-emerald-200">R$ {formatBRL(acerto.cotaIdeal || 0)}</p>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                {[acerto.parceiro1, acerto.parceiro2].filter(Boolean).map((p) => {
+                  if (!p) return null;
+
+                  const valorPago = Number(p.despesasPagas || 0);
+                  const cotaBase = Number(acerto.cotaIdeal || 0);
+                  const valorLiquidoDevido = valorPago - cotaBase;
+                  const compensacoes = Number(p.compensacoesConcedidas || 0) - Number(p.compensacoesRecebidas || 0);
+                  const valorTotalDevido = valorLiquidoDevido + compensacoes;
+                  const recebe = valorTotalDevido > 0;
+                  const deve = valorTotalDevido < 0;
+                  const cardClasses = recebe
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                    : deve
+                      ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                      : 'bg-gray-50 dark:bg-gray-700/30 border-gray-200 dark:border-gray-700';
+                  const titleClasses = recebe
+                    ? 'text-emerald-700 dark:text-emerald-300'
+                    : deve
+                      ? 'text-red-700 dark:text-red-300'
+                      : 'text-gray-700 dark:text-gray-300';
+                  const colorByValue = (value: number) => (
+                    value > 0
+                      ? 'text-emerald-700 dark:text-emerald-300'
+                      : value < 0
+                        ? 'text-red-700 dark:text-red-300'
+                        : 'text-gray-700 dark:text-gray-300'
+                  );
+                  const signedCurrency = (value: number) => (
+                    `${value > 0 ? '+ ' : value < 0 ? '- ' : ''}R$ ${formatBRL(Math.abs(value))}`
+                  );
+
+                  return (
+                    <div key={p.usuarioId} className={`rounded-xl p-4 border ${cardClasses}`}>
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <p className={`text-sm font-semibold ${titleClasses}`}>{p.nome}</p>
+                        <span className={`text-xs font-semibold ${titleClasses}`}>
+                          {recebe ? 'A receber' : deve ? 'A pagar' : 'Quite'}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex justify-between gap-3">
+                          <span>1. Valor pago</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(valorPago)}</span>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <span>2. Cota base (50/50)</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(cotaBase)}</span>
+                        </div>
+                        <div className="flex justify-between gap-3 border-t border-gray-200 dark:border-gray-700 pt-2">
+                          <span>3. Valor líquido devido</span>
+                          <span className={`font-semibold ${colorByValue(valorLiquidoDevido)}`}>
+                            {signedCurrency(valorLiquidoDevido)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <span>4. Compensações</span>
+                          <span className={`font-semibold ${colorByValue(compensacoes)}`}>
+                            {signedCurrency(compensacoes)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between gap-3 border-t border-gray-200 dark:border-gray-700 pt-2">
+                          <span className="font-medium">5. Valor total devido</span>
+                          <span className={`font-bold ${colorByValue(valorTotalDevido)}`}>
+                            {signedCurrency(valorTotalDevido)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {(acerto.totalCompensacoesMes || 0) <= 0 ? (
-                <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-4 text-center">
-                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                    Sem compensações neste mês. Ninguém deve nada.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                    {[acerto.parceiro1, acerto.parceiro2].filter(Boolean).map((p) => {
-                      if (!p) return null;
+              {(() => {
+                const p1 = acerto.parceiro1;
+                const p2 = acerto.parceiro2;
 
-                      const saldo = Number(p.saldoFinal || 0);
-                      const recebe = saldo > 0;
-                      const deve = saldo < 0;
-                      const compensacaoDireta = Number(p.compensacoesConcedidas || 0) - Number(p.compensacoesRecebidas || 0);
-                      const cardClasses = recebe
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                        : deve
-                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                          : 'bg-gray-50 dark:bg-gray-700/30 border-gray-200 dark:border-gray-700';
-                      const titleClasses = recebe
-                        ? 'text-emerald-700 dark:text-emerald-300'
-                        : deve
-                          ? 'text-red-700 dark:text-red-300'
-                          : 'text-gray-700 dark:text-gray-300';
-                      const compensacaoLabel = compensacaoDireta > 0
-                        ? 'Compensou'
-                        : compensacaoDireta < 0
-                          ? 'Recebeu compensação'
-                          : 'Compensação';
+                if (!p1 || !p2) return null;
 
-                      return (
-                        <div key={p.usuarioId} className={`rounded-xl p-4 border ${cardClasses}`}>
-                          <div className="flex items-start justify-between gap-3 mb-4">
-                            <p className={`text-sm font-semibold ${titleClasses}`}>{p.nome}</p>
-                            <span className={`text-xs font-semibold ${titleClasses}`}>
-                              {recebe ? 'Recebe' : deve ? 'Deve' : 'Quite'}
-                            </span>
-                          </div>
+                const cotaBase = Number(acerto.cotaIdeal || 0);
+                const valorTotalDevidoP1 = (
+                  Number(p1.despesasPagas || 0) - cotaBase
+                ) + (
+                  Number(p1.compensacoesConcedidas || 0) - Number(p1.compensacoesRecebidas || 0)
+                );
+                const valorTotalDevidoP2 = (
+                  Number(p2.despesasPagas || 0) - cotaBase
+                ) + (
+                  Number(p2.compensacoesConcedidas || 0) - Number(p2.compensacoesRecebidas || 0)
+                );
+                const threshold = 0.01;
+                const parceiros = [
+                  { nome: p1.nome, valor: valorTotalDevidoP1 },
+                  { nome: p2.nome, valor: valorTotalDevidoP2 },
+                ];
+                const positivos = parceiros
+                  .filter((parceiro) => parceiro.valor > threshold)
+                  .sort((a, b) => b.valor - a.valor);
+                const negativos = parceiros
+                  .filter((parceiro) => parceiro.valor < -threshold)
+                  .sort((a, b) => a.valor - b.valor);
 
-                          <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
-                            <div className="flex justify-between gap-3">
-                              <span>Gasto bruto</span>
-                              <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(p.despesasPagas)}</span>
-                            </div>
-                            <div className="flex justify-between gap-3">
-                              <span>{compensacaoLabel}</span>
-                              <span className="font-medium text-amber-700 dark:text-amber-300">
-                                {compensacaoDireta > 0 ? '+ ' : compensacaoDireta < 0 ? '- ' : ''}
-                                R$ {formatBRL(Math.abs(compensacaoDireta))}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-3 border-t border-gray-200 dark:border-gray-700 pt-2">
-                              <span>Parte usada no acerto</span>
-                              <span className="font-bold text-gray-900 dark:text-white">R$ {formatBRL(p.valorLiquidoArcado)}</span>
-                            </div>
-                            <div className="flex justify-between gap-3">
-                              <span>Cota ideal bruta</span>
-                              <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(acerto.cotaIdeal)}</span>
-                            </div>
-                            <div className="flex justify-between gap-3 border-t border-gray-200 dark:border-gray-700 pt-2">
-                              <span className="font-medium">Saldo final</span>
-                              <span className={`font-bold ${titleClasses}`}>
-                                {recebe ? '+ ' : deve ? '- ' : ''}
-                                R$ {formatBRL(Math.abs(saldo))}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {acerto.resumoFinal && (
-                    <div className={`rounded-xl p-4 text-center ${
-                      acerto.resumoFinal.equilibrado
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
-                        : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
-                    }`}>
-                      {acerto.resumoFinal.equilibrado ? (
-                        <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
-                          Sem acerto pendente. Estão quites neste mês.
-                        </p>
-                      ) : (
-                        <>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Resultado final</p>
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">
-                            <span className="text-red-600 dark:text-red-400">{acerto.resumoFinal.quemDeve}</span>
-                            {' deve '}
-                            <span className="text-emerald-600 dark:text-emerald-400">R$ {formatBRL(acerto.resumoFinal.valor)}</span>
-                            {' para '}
-                            <span className="text-emerald-600 dark:text-emerald-400">{acerto.resumoFinal.paraQuem}</span>
-                          </p>
-                        </>
-                      )}
+                if (positivos.length === 0 && negativos.length === 0) {
+                  return (
+                    <div className="rounded-xl p-4 text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                      <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
+                        Sem acerto pendente neste mês
+                      </p>
                     </div>
-                  )}
-                </>
-              )}
+                  );
+                }
+
+                const credor = positivos[0]
+                  ?? parceiros.find((parceiro) => Math.abs(parceiro.valor) < threshold)
+                  ?? parceiros[0];
+                const devedor = negativos[0]
+                  ?? parceiros.find((parceiro) => parceiro.nome !== credor.nome)
+                  ?? parceiros[1];
+                const valorReferencia = positivos[0] ?? negativos[0];
+                const valorTransacao = positivos.length > 0 && negativos.length > 0
+                  ? Math.min(Math.abs(credor.valor), Math.abs(devedor.valor))
+                  : Math.abs(valorReferencia?.valor || 0);
+
+                if (valorTransacao < threshold) {
+                  return (
+                    <div className="rounded-xl p-4 text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                      <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
+                        Sem acerto pendente neste mês
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="rounded-xl p-4 text-center bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Resultado final</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                      <span className="text-red-600 dark:text-red-400">{devedor.nome}</span>
+                      {' deve '}
+                      <span className="text-emerald-600 dark:text-emerald-400">R$ {formatBRL(valorTransacao)}</span>
+                      {' para '}
+                      <span className="text-emerald-600 dark:text-emerald-400">{credor.nome}</span>
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
