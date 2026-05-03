@@ -498,6 +498,7 @@ export const Dashboard = () => {
           )}
 
           {/* Acerto do Mês */}
+          {/* Comentário bobo para forçar um novo deploy */}
           {!isSolo && acerto && !acerto.solo && (
             <div
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 opacity-0"
