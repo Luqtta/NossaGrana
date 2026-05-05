@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { despesasApi, type FiltrosDespesas } from '../api/despesas.api';
+import { compensacoesApi } from '../api/compensacoes.api';
 import { formatBRL } from '../utils/formatBRL';
+import { calcularAcertoMensal, type AcertoMensalCalculado } from '../utils/calcularAcertoMensal';
 import { categoriasApi } from '../api/categorias.api';
 import { casalApi } from '../api/casal.api';
 import { Sidebar } from '../components/Sidebar';
@@ -32,6 +34,7 @@ export const Historico = () => {
   const [casal, setCasal] = useState<CasalData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mesAno, setMesAno] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`);
+  const [acertoMensal, setAcertoMensal] = useState<AcertoMensalCalculado | null>(null);
 
   const [despesaEditando, setDespesaEditando] = useState<Despesa | null>(null);
   const [despesaDeletando, setDespesaDeletando] = useState<Despesa | null>(null);
@@ -73,6 +76,7 @@ export const Historico = () => {
   const carregarDados = async () => {
     try {
       setLoading(true);
+      setAcertoMensal(null);
       const [ano, mes] = mesAno.split('-').map(Number);
       const [data, cats, casalData] = await Promise.all([
         despesasApi.listarPorMes(mes, ano),
@@ -83,6 +87,51 @@ export const Historico = () => {
       setCategorias(cats);
       setCasal(casalData);
       setPaginaAtual(1);
+
+      try {
+        const [acertoData, compensacoesMes] = await Promise.all([
+          compensacoesApi.calcularAcerto(mes, ano),
+          compensacoesApi.listarPorMes(mes, ano),
+        ]);
+
+        const pessoas = [
+          acertoData.parceiro1
+            ? {
+                usuarioId: acertoData.parceiro1.usuarioId,
+                nome: acertoData.parceiro1.nome,
+                valorPago: Number(acertoData.parceiro1.despesasPagas || 0),
+                compensacoesConcedidas: Number(acertoData.parceiro1.compensacoesConcedidas || 0),
+                compensacoesRecebidas: Number(acertoData.parceiro1.compensacoesRecebidas || 0),
+              }
+            : null,
+          acertoData.parceiro2
+            ? {
+                usuarioId: acertoData.parceiro2.usuarioId,
+                nome: acertoData.parceiro2.nome,
+                valorPago: Number(acertoData.parceiro2.despesasPagas || 0),
+                compensacoesConcedidas: Number(acertoData.parceiro2.compensacoesConcedidas || 0),
+                compensacoesRecebidas: Number(acertoData.parceiro2.compensacoesRecebidas || 0),
+              }
+            : null,
+        ].filter((pessoa): pessoa is NonNullable<typeof pessoa> => pessoa !== null);
+
+        const totalCompensacoesMes = compensacoesMes.reduce(
+          (total, compensacao) => total + Number(compensacao.valor || 0),
+          0,
+        );
+
+        setAcertoMensal(
+          calcularAcertoMensal({
+            totalMes: Number(acertoData.totalDespesasMes || 0),
+            cotaBase: Number(acertoData.cotaIdeal || 0),
+            totalCompensacoesMes,
+            pessoas,
+          }),
+        );
+      } catch (acertoError) {
+        console.error('Erro ao carregar acerto do mes:', acertoError);
+        setAcertoMensal(null);
+      }
     } catch (error) {
       console.error('Erro ao carregar despesas:', error);
     } finally {
@@ -158,6 +207,14 @@ export const Historico = () => {
     VARIAVEL: despesas.filter(d => d.tipoDespesa === 'VARIAVEL').reduce((acc, d) => acc + Number(d.valor), 0),
     IMPREVISTA: despesas.filter(d => d.tipoDespesa === 'IMPREVISTA').reduce((acc, d) => acc + Number(d.valor), 0),
   };
+  const colorByValue = (value: number): string => {
+    if (value > 0) return 'text-emerald-300';
+    if (value < 0) return 'text-red-300';
+    return 'text-gray-300';
+  };
+  const signedCurrency = (value: number): string => (
+    `${value > 0 ? '+ ' : value < 0 ? '- ' : ''}R$ ${formatBRL(Math.abs(value))}`
+  );
 
   const despesasPaginadas = despesas.slice(
     (paginaAtual - 1) * itensPorPagina,
@@ -216,6 +273,121 @@ export const Historico = () => {
               </div>
             ))}
           </div>
+
+          {acertoMensal && (
+            <div
+              className="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 to-gray-800 p-6 text-white shadow-lg opacity-0"
+              style={{ animation: 'fadeInUp 0.6s ease-out 0.52s forwards' }}
+            >
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Acerto do mes</p>
+                  <h3 className="text-xl font-bold text-white mt-1">Fechamento financeiro mensal</h3>
+                </div>
+                <p className="text-xs text-gray-300">mes + compensacoes + resultado final</p>
+              </div>
+
+              <div className="mb-5 rounded-xl border border-gray-700 bg-gray-800/70 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-300 mb-3">Resumo do mes</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 text-xs">
+                  <div className="rounded-lg border border-gray-700 bg-gray-900/70 p-3">
+                    <p className="text-gray-400">Total gasto no mes</p>
+                    <p className="font-semibold text-white">R$ {formatBRL(acertoMensal.totalMes)}</p>
+                  </div>
+                  <div className="rounded-lg border border-gray-700 bg-gray-900/70 p-3">
+                    <p className="text-gray-400">Cota base por pessoa</p>
+                    <p className="font-semibold text-white">R$ {formatBRL(acertoMensal.cotaBase)}</p>
+                  </div>
+                  <div className="rounded-lg border border-gray-700 bg-gray-900/70 p-3">
+                    <p className="text-gray-400">Participantes</p>
+                    <p className="font-semibold text-white">{acertoMensal.participantes}</p>
+                  </div>
+                  <div className="rounded-lg border border-gray-700 bg-gray-900/70 p-3">
+                    <p className="text-gray-400">Total de compensacoes</p>
+                    <p className="font-semibold text-white">R$ {formatBRL(acertoMensal.totalCompensacoesMes)}</p>
+                  </div>
+                  <div className="rounded-lg border border-gray-700 bg-gray-900/70 p-3">
+                    <p className="text-gray-400">Resultado final</p>
+                    <p className="font-semibold text-white">
+                      {acertoMensal.resultadoFinal.valor > 0
+                        ? acertoMensal.resultadoFinal.texto
+                        : 'Sem acerto pendente neste mes'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                {acertoMensal.pessoas.map((pessoa) => {
+                  const recebe = pessoa.status === 'A receber';
+                  const paga = pessoa.status === 'A pagar';
+                  const cardClass = recebe
+                    ? 'border-emerald-800 bg-emerald-950/40'
+                    : paga
+                      ? 'border-red-800 bg-red-950/40'
+                      : 'border-gray-700 bg-gray-900/60';
+                  const statusClass = recebe
+                    ? 'text-emerald-300'
+                    : paga
+                      ? 'text-red-300'
+                      : 'text-gray-300';
+
+                  return (
+                    <div key={pessoa.usuarioId} className={`rounded-xl border p-4 ${cardClass}`}>
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <p className="text-sm font-semibold text-white">{pessoa.nome}</p>
+                        <span className={`text-xs font-semibold ${statusClass}`}>{pessoa.status}</span>
+                      </div>
+
+                      <div className="space-y-2 text-xs text-gray-300">
+                        <div className="flex justify-between gap-3">
+                          <span>Valor pago</span>
+                          <span className="font-medium text-white">R$ {formatBRL(pessoa.valorPago)}</span>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <span>Cota base (50/50)</span>
+                          <span className="font-medium text-white">R$ {formatBRL(pessoa.cotaBase)}</span>
+                        </div>
+                        <div className="flex justify-between gap-3 border-t border-gray-700 pt-2">
+                          <span>Valor liquido devido</span>
+                          <span className={`font-semibold ${colorByValue(pessoa.valorLiquidoDevido)}`}>
+                            {signedCurrency(pessoa.valorLiquidoDevido)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <span>Compensacoes</span>
+                          <span className={`font-semibold ${colorByValue(pessoa.compensacoes)}`}>
+                            {signedCurrency(pessoa.compensacoes)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between gap-3 border-t border-gray-700 pt-2">
+                          <span className="font-medium">Valor total devido</span>
+                          <span className={`font-bold ${colorByValue(pessoa.valorTotalDevido)}`}>
+                            {signedCurrency(pessoa.valorTotalDevido)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div
+                className={`rounded-xl border p-4 text-center ${
+                  acertoMensal.resultadoFinal.valor > 0
+                    ? 'border-amber-700 bg-amber-950/40'
+                    : 'border-emerald-800 bg-emerald-950/40'
+                }`}
+              >
+                <p className="text-xs text-gray-300 mb-1">Resultado final</p>
+                <p className="text-lg font-bold text-white">
+                  {acertoMensal.resultadoFinal.valor > 0
+                    ? acertoMensal.resultadoFinal.texto
+                    : 'Sem acerto pendente neste mes'}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Filtros */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-4 opacity-0" style={{ animation: 'fadeInUp 0.6s ease-out 0.55s forwards' }}>
