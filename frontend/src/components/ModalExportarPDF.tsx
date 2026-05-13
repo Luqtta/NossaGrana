@@ -386,7 +386,6 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
         // Gastos por categoria
         const categorias = Array.from(pizza.categorias as string[]);
         const valoresPizza = Array.from(pizza.valores as number[]);
-        const icones = pizza.icones as Record<string, string>;
 
         if (y > 210) { doc.addPage(); y = 20; }
 
