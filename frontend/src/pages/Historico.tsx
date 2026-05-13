@@ -159,29 +159,6 @@ export const Historico = () => {
     return categorias.find(c => c.id === categoriaId)?.icone || '📦';
   };
 
-  const exportarCSV = () => {
-    const headers = ['Data', 'Descrição', 'Categoria', 'Responsável', 'Tipo', 'Método', 'Valor'];
-    const rows = despesas.map(d => [
-      new Date(d.dataTransacao + 'T00:00:00').toLocaleDateString('pt-BR'),
-      `"${d.descricao.replace(/"/g, '""')}"`,
-      d.categoriaNome,
-      getResponsavelNome(d.responsavel),
-      d.tipoDespesa || '',
-      d.metodoPagamento || '',
-      formatBRL(Number(d.valor)),
-    ]);
-    const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `despesas_${mesAno}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 100);
-  };
-
   const getResponsavelNome = (responsavel: string) => {
     if (responsavel === 'PARCEIRO_1') return casal?.nomeParceiro1 || 'Parceiro 1';
     if (responsavel === 'PARCEIRO_2') return casal?.nomeParceiro2 || 'Parceiro 2';
