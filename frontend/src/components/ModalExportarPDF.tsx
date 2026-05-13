@@ -179,7 +179,7 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
           // Gastos por categoria
           const categorias = Array.from(pizza.categorias as string[]);
           const valores = Array.from(pizza.valores as number[]);
-          const icones = pizza.icones as Record<string, string>;
+
 
           doc.setFontSize(12);
           doc.setFont('helvetica', 'bold');
@@ -188,7 +188,7 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
           autoTable(doc, {
             startY: y + 4,
             head: [['Categoria', 'Total']],
-            body: categorias.map((cat, i) => [`${icones[cat] || ''} ${cat}`, `R$ ${formatBRL(valores[i])}`]),
+            body: categorias.map((cat, i) => [cat, `R$ ${formatBRL(valores[i])}`]),
             theme: 'striped',
             headStyles: { fillColor: VERDE },
             columnStyles: { 1: { halign: 'right' } },
@@ -397,7 +397,7 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
         autoTable(doc, {
           startY: y + 4,
           head: [['Categoria', 'Total']],
-          body: categorias.map((cat, i) => [`${icones[cat] || ''} ${cat}`, `R$ ${formatBRL(valoresPizza[i])}`]),
+          body: categorias.map((cat, i) => [cat, `R$ ${formatBRL(valoresPizza[i])}`]),
           theme: 'striped',
           headStyles: { fillColor: VERDE },
           columnStyles: { 1: { halign: 'right' } },
