@@ -10,6 +10,7 @@ import { casalApi } from '../api/casal.api';
 import { Sidebar } from '../components/Sidebar';
 import { Modal } from '../components/Modal';
 import { ModalEditarDespesa } from '../components/ModalEditarDespesa';
+import { ModalExportarPDF } from '../components/ModalExportarPDF';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import type { Despesa, Categoria } from '../types/despesa.types';
 import type { CasalData } from '../api/casal.api';
@@ -39,6 +40,7 @@ export const Historico = () => {
   const [despesaEditando, setDespesaEditando] = useState<Despesa | null>(null);
   const [despesaDeletando, setDespesaDeletando] = useState<Despesa | null>(null);
   const [despesaCancelando, setDespesaCancelando] = useState<Despesa | null>(null);
+  const [modalPDFAberto, setModalPDFAberto] = useState(false);
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [filtros, setFiltros] = useState<FiltrosDespesas>({
@@ -234,14 +236,12 @@ export const Historico = () => {
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Histórico de Despesas</h2>
               <p className="text-gray-600 dark:text-gray-400 mt-1">Visualize todas as suas despesas por mês</p>
             </div>
-            {despesas.length > 0 && (
-              <button
-                onClick={exportarCSV}
-                className="bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition font-medium text-sm"
-              >
-                📥 Exportar CSV
-              </button>
-            )}
+            <button
+              onClick={() => setModalPDFAberto(true)}
+              className="bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition font-medium text-sm"
+            >
+              📄 Exportar PDF
+            </button>
           </div>
 
           {/* Seletor de Mês */}
@@ -628,6 +628,11 @@ export const Historico = () => {
           </div>
         </div>
       </main>
+
+      <ModalExportarPDF
+        isOpen={modalPDFAberto}
+        onClose={() => setModalPDFAberto(false)}
+      />
 
       <ModalEditarDespesa
         despesa={despesaEditando}

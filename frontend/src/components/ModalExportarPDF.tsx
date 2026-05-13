@@ -4,9 +4,11 @@ import autoTable from 'jspdf-autotable';
 import toast from 'react-hot-toast';
 import { despesasApi } from '../api/despesas.api';
 import { relatoriosApi } from '../api/relatorios.api';
+import { compensacoesApi } from '../api/compensacoes.api';
 import { casalApi } from '../api/casal.api';
 import type { CasalData } from '../api/casal.api';
 import { formatBRL } from '../utils/formatBRL';
+import { calcularAcertoMensal } from '../utils/calcularAcertoMensal';
 import type { Despesa } from '../types/despesa.types';
 
 type TipoPeriodo = 'dia' | 'mes' | 'ano';
@@ -157,10 +159,12 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
         doc.save(`nossagrana_dia_${dia}.pdf`);
 
       } else if (tipo === 'mes') {
-        const [despesas, pizza, barras] = await Promise.all([
+        const [despesas, pizza, barras, acertoData, compensacoesMes] = await Promise.all([
           despesasApi.listarPorMes(mes, ano),
           relatoriosApi.gastosPorCategoria(user.casalId, mes, ano),
           relatoriosApi.comparacaoParceiros(user.casalId, mes, ano),
+          compensacoesApi.calcularAcerto(mes, ano).catch(() => null),
+          compensacoesApi.listarPorMes(mes, ano).catch(() => []),
         ]);
 
         let y = addCabecalho(doc, casal, 'Relatório Mensal', `${MESES[mes - 1]} de ${ano}`);
@@ -244,6 +248,97 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
             columnStyles: { 5: { halign: 'right' } },
             styles: { fontSize: 9 },
           });
+
+          // Acerto do Mês
+          if (acertoData) {
+            const totalCompensacoesMes = (compensacoesMes as any[]).reduce(
+              (total: number, c: any) => total + Number(c.valor || 0), 0
+            );
+            const pessoas = [
+              acertoData.parceiro1 ? {
+                usuarioId: acertoData.parceiro1.usuarioId,
+                nome: acertoData.parceiro1.nome,
+                valorPago: Number(acertoData.parceiro1.despesasPagas || 0),
+                compensacoesConcedidas: Number(acertoData.parceiro1.compensacoesConcedidas || 0),
+                compensacoesRecebidas: Number(acertoData.parceiro1.compensacoesRecebidas || 0),
+              } : null,
+              acertoData.parceiro2 ? {
+                usuarioId: acertoData.parceiro2.usuarioId,
+                nome: acertoData.parceiro2.nome,
+                valorPago: Number(acertoData.parceiro2.despesasPagas || 0),
+                compensacoesConcedidas: Number(acertoData.parceiro2.compensacoesConcedidas || 0),
+                compensacoesRecebidas: Number(acertoData.parceiro2.compensacoesRecebidas || 0),
+              } : null,
+            ].filter((p): p is NonNullable<typeof p> => p !== null);
+
+            const acerto = calcularAcertoMensal({
+              totalMes: Number(acertoData.totalDespesasMes || 0),
+              cotaBase: Number(acertoData.cotaIdeal || 0),
+              totalCompensacoesMes,
+              pessoas,
+            });
+
+            doc.addPage();
+            y = 20;
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Acerto do Mês', 14, y);
+            y += 4;
+
+            autoTable(doc, {
+              startY: y,
+              head: [['Indicador', 'Valor']],
+              body: [
+                ['Total gasto no mês', `R$ ${formatBRL(acerto.totalMes)}`],
+                ['Cota base por pessoa (50/50)', `R$ ${formatBRL(acerto.cotaBase)}`],
+                ['Total de compensações', `R$ ${formatBRL(acerto.totalCompensacoesMes)}`],
+                ['Resultado final', acerto.resultadoFinal.valor > 0 ? acerto.resultadoFinal.texto : 'Sem acerto pendente neste mês'],
+              ],
+              theme: 'striped',
+              headStyles: { fillColor: VERDE },
+              columnStyles: { 1: { halign: 'right' } },
+              styles: { fontSize: 10 },
+            });
+
+            y = (doc as any).lastAutoTable.finalY + 10;
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Detalhamento por Parceiro', 14, y);
+            y += 4;
+
+            autoTable(doc, {
+              startY: y,
+              head: [['Parceiro', 'Valor Pago', 'Cota Base', 'Líquido Devido', 'Compensações', 'Total Devido', 'Status']],
+              body: acerto.pessoas.map(p => [
+                p.nome,
+                `R$ ${formatBRL(p.valorPago)}`,
+                `R$ ${formatBRL(p.cotaBase)}`,
+                `R$ ${formatBRL(p.valorLiquidoDevido)}`,
+                `R$ ${formatBRL(p.compensacoes)}`,
+                `R$ ${formatBRL(p.valorTotalDevido)}`,
+                p.status,
+              ]),
+              theme: 'striped',
+              headStyles: { fillColor: VERDE },
+              columnStyles: {
+                1: { halign: 'right' },
+                2: { halign: 'right' },
+                3: { halign: 'right' },
+                4: { halign: 'right' },
+                5: { halign: 'right' },
+              },
+              styles: { fontSize: 9 },
+              didParseCell: (data) => {
+                if (data.section === 'body' && data.column.index === 6) {
+                  const status = data.cell.raw as string;
+                  if (status === 'A receber') data.cell.styles.textColor = [16, 185, 129];
+                  else if (status === 'A pagar') data.cell.styles.textColor = [239, 68, 68];
+                }
+              },
+            });
+          }
         }
 
         doc.save(`nossagrana_${MESES[mes - 1].toLowerCase()}_${ano}.pdf`);
@@ -486,6 +581,7 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
                 <li>• Gastos por categoria</li>
                 <li>• Comparação por parceiro e categoria</li>
                 <li>• Lista completa de despesas do mês</li>
+                <li>• Acerto do mês (quem deve, quanto e para quem)</li>
               </ul>
             )}
             {tipo === 'ano' && (
