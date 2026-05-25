@@ -52,7 +52,10 @@ export const Dashboard = () => {
   const carregarPreferencias = async () => {
     try {
       const pref = await preferenciasApi.buscar();
-      if (pref.corDestaque) setCorDestaque(pref.corDestaque);
+      if (pref.corDestaque) {
+        setCorDestaque(pref.corDestaque);
+        document.documentElement.style.setProperty('--cor-destaque', pref.corDestaque);
+      }
       if (typeof pref.opacidadeFundo === 'number') setOpacidadeFundo(pref.opacidadeFundo);
       if (pref.ordemCards) {
         try {
@@ -175,14 +178,14 @@ export const Dashboard = () => {
     >
       <Sidebar onLogout={handleLogout} />
 
-      <main className="flex-1 overflow-y-auto pt-14 md:pt-0 relative">
-        {imagemFundoUrl && (
-          <div
-            aria-hidden
-            className="absolute inset-0 pointer-events-none bg-cover bg-center"
-            style={{ backgroundImage: `url(${imagemFundoUrl})`, opacity: opacidadeFundo / 100 }}
-          />
-        )}
+      {imagemFundoUrl && (
+        <div
+          aria-hidden
+          className="fixed inset-0 pointer-events-none bg-cover bg-center z-0"
+          style={{ backgroundImage: `url(${imagemFundoUrl})`, opacity: opacidadeFundo / 100 }}
+        />
+      )}
+      <main className="flex-1 overflow-y-auto pt-14 md:pt-0 relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-8 relative">
           {/* Header */}
           <div
@@ -672,7 +675,8 @@ export const Dashboard = () => {
           >
             <button
               onClick={() => navigate('/nova-despesa')}
-              className="bg-emerald-600 dark:bg-emerald-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-emerald-700 dark:hover:bg-emerald-600 transition shadow-lg flex items-center gap-2"
+              className="text-white px-6 py-3 rounded-xl font-semibold hover:brightness-110 transition shadow-lg flex items-center gap-2"
+              style={{ backgroundColor: 'var(--cor-destaque, #10b981)' }}
             >
               <span className="text-xl">+</span>
               Nova Despesa

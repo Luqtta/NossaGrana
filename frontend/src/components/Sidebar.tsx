@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, History, FileText, Settings, LogOut, Tag, Plus, Menu, X, ArrowRightLeft, FolderArchive, Palette } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
+import { preferenciasApi } from '../api/preferencias.api';
 
 interface SidebarProps {
   onLogout: () => void;
@@ -12,6 +13,16 @@ export const Sidebar = ({ onLogout }: SidebarProps) => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  useEffect(() => {
+    preferenciasApi.buscar()
+      .then(pref => {
+        if (pref.corDestaque) {
+          document.documentElement.style.setProperty('--cor-destaque', pref.corDestaque);
+        }
+      })
+      .catch(() => {});
+  }, []);
   const userInitials = (user.nome || '')
     .split(' ')
     .filter(Boolean)
@@ -44,7 +55,7 @@ export const Sidebar = ({ onLogout }: SidebarProps) => {
       {/* Logo */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">NossaGrana</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--cor-destaque, #10b981)' }}>NossaGrana</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Finanças do Casal</p>
         </div>
         {/* Close button - only on mobile */}
@@ -66,9 +77,13 @@ export const Sidebar = ({ onLogout }: SidebarProps) => {
               onClick={() => handleNavigate(item.path)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                 isActive(item.path)
-                  ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                  ? 'shadow-sm'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:-translate-y-0.5 hover:shadow-md'
               }`}
+              style={isActive(item.path) ? {
+                backgroundColor: 'color-mix(in srgb, var(--cor-destaque, #10b981) 12%, transparent)',
+                color: 'var(--cor-destaque, #10b981)',
+              } : undefined}
             >
               <Icon size={20} />
               <span className="text-left">{item.label}</span>
