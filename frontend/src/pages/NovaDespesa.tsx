@@ -28,6 +28,8 @@ export const NovaDespesa = () => {
     tipoDespesa: 'VARIAVEL',
     metodoPagamento: 'PIX',
     observacoes: '',
+    pago: false,
+    debitoAutomatico: false,
   });
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -308,17 +310,49 @@ export const NovaDespesa = () => {
               <div
                 className={`mt-3 overflow-hidden transition-all duration-300 ease-in-out ${
                   formData.tipoDespesa === 'FIXA'
-                    ? 'max-h-40 opacity-100'
+                    ? 'max-h-96 opacity-100'
                     : 'max-h-0 opacity-0'
                 }`}
               >
-                <div className="p-3 rounded-xl border-2 border-blue-400 bg-blue-50 dark:bg-blue-900/20 flex items-start gap-3">
-                  <span className="text-xl mt-0.5">🔁</span>
-                  <div>
-                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Despesa recorrente</p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-                      Esta despesa será adicionada automaticamente todo mês no dia 1.
-                    </p>
+                <div className="p-3 rounded-xl border-2 border-blue-400 bg-blue-50 dark:bg-blue-900/20">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl mt-0.5">🔁</span>
+                    <div>
+                      <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Despesa recorrente</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                        Será lançada automaticamente todo mês no mesmo dia da data escolhida acima
+                        {formData.dataTransacao ? ` (dia ${parseInt(formData.dataTransacao.slice(8, 10), 10)})` : ''}.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!formData.debitoAutomatico}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          debitoAutomatico: e.target.checked,
+                          pago: e.target.checked,
+                        })}
+                        className="mt-1 accent-emerald-600"
+                      />
+                      <span className="text-xs text-blue-700 dark:text-blue-300">
+                        <span className="font-semibold">Débito automático</span> — cada ocorrência já entra como paga
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!formData.pago}
+                        onChange={(e) => setFormData({ ...formData, pago: e.target.checked })}
+                        className="mt-1 accent-emerald-600"
+                      />
+                      <span className="text-xs text-blue-700 dark:text-blue-300">
+                        Esta primeira ocorrência <span className="font-semibold">já está paga</span>
+                      </span>
+                    </label>
                   </div>
                 </div>
               </div>

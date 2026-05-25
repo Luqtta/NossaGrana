@@ -34,4 +34,8 @@ public class DespesaRequest {
     private String observacoes;
 
     private String urlComprovante;
+
+    private Boolean pago;
+
+    private Boolean debitoAutomatico;
 }

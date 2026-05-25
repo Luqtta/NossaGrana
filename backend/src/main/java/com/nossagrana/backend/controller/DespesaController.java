@@ -59,6 +59,12 @@ public class DespesaController {
         return ResponseEntity.ok(despesaService.cancelarRecorrencia(id, usuario.getId()));
     }
 
+    @PatchMapping("/{id}/pago")
+    public ResponseEntity<DespesaResponse> alternarPago(@PathVariable Long id) {
+        Usuario usuario = autenticacaoHelper.getUsuarioAtual();
+        return ResponseEntity.ok(despesaService.alternarPago(id, usuario.getId()));
+    }
+
     @GetMapping("/{id}/historico")
     public ResponseEntity<List<HistoricoEdicao>> buscarHistorico(@PathVariable Long id) {
         autenticacaoHelper.getUsuarioAtual(); // garante autenticação

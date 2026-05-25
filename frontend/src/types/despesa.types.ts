@@ -18,6 +18,8 @@ export interface DespesaRequest {
   observacoes?: string;
   urlComprovante?: string;
   valorPrevisto?: number;
+  pago?: boolean;
+  debitoAutomatico?: boolean;
 }
 
 export interface Despesa {
@@ -39,4 +41,6 @@ export interface Despesa {
   recorrente?: boolean;
   recorrenciaAtiva?: boolean;
   despesaOrigemId?: number;
+  pago?: boolean;
+  debitoAutomatico?: boolean;
 }

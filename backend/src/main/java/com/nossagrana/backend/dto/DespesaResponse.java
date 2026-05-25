@@ -32,4 +32,6 @@ public class DespesaResponse {
     private Boolean recorrente;
     private Boolean recorrenciaAtiva;
     private Long despesaOrigemId;
+    private Boolean pago;
+    private Boolean debitoAutomatico;
 }

@@ -9,6 +9,7 @@ import { despesasApi } from '../api/despesas.api';
 import { categoriasApi } from '../api/categorias.api';
 import { casalApi } from '../api/casal.api';
 import { compensacoesApi } from '../api/compensacoes.api';
+import { preferenciasApi, CARDS_DISPONIVEIS, type CardId } from '../api/preferencias.api';
 import type { EstatisticasData, CasalData } from '../api/casal.api';
 import type { Despesa, Categoria } from '../types/despesa.types';
 import type { AcertoMensalResponse } from '../types/compensacao.types';
@@ -26,6 +27,11 @@ export const Dashboard = () => {
   const [editMeta, setEditMeta] = useState(false);
   const [metaInput, setMetaInput] = useState(0);
   const [salvandoMeta, setSalvandoMeta] = useState(false);
+  const [corDestaque, setCorDestaque] = useState('#10b981');
+  const [imagemFundoUrl, setImagemFundoUrl] = useState<string | null>(null);
+  const [opacidadeFundo, setOpacidadeFundo] = useState(20);
+  const [ordemCards, setOrdemCards] = useState<CardId[]>(CARDS_DISPONIVEIS.map(c => c.id));
+  const [cardsEscondidos, setCardsEscondidos] = useState<Set<CardId>>(new Set());
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const lastClickRef = useRef<number>(0);
@@ -40,7 +46,35 @@ export const Dashboard = () => {
 
   useEffect(() => {
     carregarDados();
+    carregarPreferencias();
   }, []);
+
+  const carregarPreferencias = async () => {
+    try {
+      const pref = await preferenciasApi.buscar();
+      if (pref.corDestaque) setCorDestaque(pref.corDestaque);
+      if (typeof pref.opacidadeFundo === 'number') setOpacidadeFundo(pref.opacidadeFundo);
+      if (pref.ordemCards) {
+        try {
+          const arr = JSON.parse(pref.ordemCards) as CardId[];
+          const validos = arr.filter(id => CARDS_DISPONIVEIS.some(c => c.id === id));
+          const faltando = CARDS_DISPONIVEIS.map(c => c.id).filter(id => !validos.includes(id));
+          setOrdemCards([...validos, ...faltando]);
+        } catch {}
+      }
+      if (pref.cardsEscondidos) {
+        try {
+          setCardsEscondidos(new Set(JSON.parse(pref.cardsEscondidos) as CardId[]));
+        } catch {}
+      }
+      if (pref.temImagemFundo) {
+        const url = await preferenciasApi.imagemFundoBlobUrl();
+        if (url) setImagemFundoUrl(url);
+      }
+    } catch {
+      // sem preferências ainda, ok
+    }
+  };
 
   useEffect(() => {
     setMetaInput(estatisticas?.metaMensal || 0);
@@ -128,12 +162,28 @@ export const Dashboard = () => {
     );
   }
 
+  const cardOrder = (id: CardId): number => {
+    const idx = ordemCards.indexOf(id);
+    return idx >= 0 ? idx : 99;
+  };
+  const cardVisivel = (id: CardId) => !cardsEscondidos.has(id);
+
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden">
+    <div
+      className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden"
+      style={{ ['--cor-destaque' as any]: corDestaque }}
+    >
       <Sidebar onLogout={handleLogout} />
 
-      <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+      <main className="flex-1 overflow-y-auto pt-14 md:pt-0 relative">
+        {imagemFundoUrl && (
+          <div
+            aria-hidden
+            className="absolute inset-0 pointer-events-none bg-cover bg-center"
+            style={{ backgroundImage: `url(${imagemFundoUrl})`, opacity: opacidadeFundo / 100 }}
+          />
+        )}
+        <div className="max-w-7xl mx-auto px-4 py-8 relative">
           {/* Header */}
           <div
             className="mb-8 opacity-0 animate-fadeInUp"
@@ -181,9 +231,10 @@ export const Dashboard = () => {
             <div className="xl:col-span-7">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Card Total Gasto */}
+                {cardVisivel('totalGasto') && (
                 <div
                   className="bg-gradient-to-br from-red-500 to-rose-600 dark:from-red-600 dark:to-rose-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between"
-                  style={{ animation: 'fadeInUp 0.6s ease-out 0.1s forwards' }}
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.1s forwards', order: cardOrder('totalGasto') }}
                 >
                   <div>
                     <p className="text-red-100 text-sm font-medium mb-2">Total Gasto</p>
@@ -193,8 +244,10 @@ export const Dashboard = () => {
                   </div>
                   <p className="text-sm text-red-100 mt-4">{despesas.length} despesas este mês</p>
                 </div>
+                )}
 
                 {/* Card Saldo do Mês */}
+                {cardVisivel('saldoMes') && (
                 <div
                   className={`bg-gradient-to-br ${
                     saldoStatus === 'positivo'
@@ -203,7 +256,7 @@ export const Dashboard = () => {
                         ? 'from-yellow-500 to-amber-600 dark:from-yellow-600 dark:to-amber-700'
                         : 'from-red-500 to-rose-600 dark:from-red-600 dark:to-rose-700'
                   } rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between`}
-                  style={{ animation: 'fadeInUp 0.6s ease-out 0.2s forwards' }}
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.2s forwards', order: cardOrder('saldoMes') }}
                 >
                   <div>
                     <p className="text-white/80 text-sm font-medium mb-2">Saldo do Mês</p>
@@ -215,12 +268,14 @@ export const Dashboard = () => {
                     {saldoStatus === 'positivo' ? 'Dentro da meta!' : saldoStatus === 'alerta' ? 'Perto do limite!' : 'Acima da meta!'}
                   </p>
                 </div>
+                )}
 
                 {/* Card Meta Mensal */}
+                {cardVisivel('metaMensal') && (
                 <div
                   onDoubleClick={() => setEditMeta(true)}
                   className="group bg-gradient-to-br from-blue-500 to-cyan-600 dark:from-blue-600 dark:to-cyan-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between relative"
-                  style={{ animation: 'fadeInUp 0.6s ease-out 0.3s forwards' }}
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.3s forwards', order: cardOrder('metaMensal') }}
                 >
                   <div>
                     <div className="flex items-start justify-between">
@@ -265,11 +320,13 @@ export const Dashboard = () => {
                     </div>
                   ) : null}
                 </div>
+                )}
 
                 {/* Card Orçamento Geral */}
+                {cardVisivel('orcamentoGeral') && (
                 <div
                   className="bg-gradient-to-br from-violet-500 to-fuchsia-600 dark:from-violet-600 dark:to-fuchsia-700 rounded-2xl p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-300 opacity-0 min-h-[170px] flex flex-col justify-between"
-                  style={{ animation: 'fadeInUp 0.6s ease-out 0.4s forwards' }}
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.4s forwards', order: cardOrder('orcamentoGeral') }}
                 >
                   <div>
                     <p className="text-violet-100 text-sm font-medium mb-2">Orçamento Geral</p>
@@ -283,10 +340,12 @@ export const Dashboard = () => {
                       : 'Nenhum orçamento definido'}
                   </p>
                 </div>
+                )}
               </div>
             </div>
 
             {/* Direita - Gastos por Pessoa */}
+            {cardVisivel('gastosPorPessoa') && (
             <div className="xl:col-span-5">
               <div
                 className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:-translate-y-1 transition-all duration-300 opacity-0 h-full min-h-[364px]"
@@ -413,9 +472,10 @@ export const Dashboard = () => {
                 </div>
               </div>
             </div>
+            )}
           </div>
 
-          {!isSolo && acerto && !acerto.solo && (
+          {cardVisivel('acertoMes') && !isSolo && acerto && !acerto.solo && (
             <div
               className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 opacity-0"
               style={{ animation: 'fadeInUp 0.6s ease-out 0.5s forwards' }}
@@ -620,6 +680,7 @@ export const Dashboard = () => {
           </div>
 
           {/* Últimas Despesas */}
+          {cardVisivel('ultimasDespesas') && (
           <div
             className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 opacity-0"
             style={{ animation: 'fadeInUp 0.6s ease-out 0.6s forwards' }}
@@ -694,6 +755,7 @@ export const Dashboard = () => {
               </div>
             )}
           </div>
+          )}
         </div>
       </main>
     </div>

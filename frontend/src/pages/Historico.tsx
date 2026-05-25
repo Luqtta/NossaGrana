@@ -536,6 +536,27 @@ export const Historico = () => {
                               {despesa.tipoDespesa}
                             </span>
                             {despesa.metodoPagamento && <span>💳 {despesa.metodoPagamento}</span>}
+                            {despesa.tipoDespesa === 'FIXA' && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const atualizada = await despesasApi.alternarPago(despesa.id);
+                                    setDespesas(prev => prev.map(d => d.id === despesa.id ? { ...d, pago: atualizada.pago } : d));
+                                    toast.success(atualizada.pago ? 'Marcada como paga' : 'Marcada como não paga');
+                                  } catch {
+                                    toast.error('Erro ao atualizar status');
+                                  }
+                                }}
+                                className={`px-2 py-0.5 rounded text-xs font-medium transition ${
+                                  despesa.pago
+                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
+                                    : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50'
+                                }`}
+                                title="Clique para alternar"
+                              >
+                                {despesa.pago ? '✓ Pago' : '○ Não pago'}
+                              </button>
+                            )}
                             {despesa.urlComprovante && (
                               <button
                                 onClick={() => abrirComprovante(despesa.urlComprovante!)}

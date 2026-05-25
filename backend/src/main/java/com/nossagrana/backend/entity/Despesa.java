@@ -84,4 +84,12 @@ public class Despesa {
 
     @Column(name = "despesa_origem_id")
     private Long despesaOrigemId;
+
+    @Builder.Default
+    @Column(name = "pago", nullable = false)
+    private Boolean pago = false;
+
+    @Builder.Default
+    @Column(name = "debito_automatico", nullable = false)
+    private Boolean debitoAutomatico = false;
 }

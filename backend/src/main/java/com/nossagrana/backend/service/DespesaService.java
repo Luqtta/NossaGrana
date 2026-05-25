@@ -32,6 +32,7 @@ public class DespesaService {
     private final UsuarioRepository usuarioRepository;
     private final CategoriaRepository categoriaRepository;
     private final HistoricoEdicaoRepository historicoRepository;
+    private final com.nossagrana.backend.repository.ComprovanteRepository comprovanteRepository;
 
     @Transactional
     public DespesaResponse criarDespesa(DespesaRequest request, Long usuarioId) {
@@ -45,6 +46,9 @@ public class DespesaService {
         validarResponsavel(usuario, request.getResponsavel(), null);
 
         boolean isFixa = "FIXA".equalsIgnoreCase(request.getTipoDespesa());
+        boolean debitoAutomatico = Boolean.TRUE.equals(request.getDebitoAutomatico());
+        Boolean pagoSolicitado = request.getPago();
+        boolean pago = pagoSolicitado != null ? pagoSolicitado : debitoAutomatico;
 
         Despesa despesa = Despesa.builder()
             .dataTransacao(request.getDataTransacao())
@@ -60,10 +64,46 @@ public class DespesaService {
             .casal(usuario.getCasal())
             .recorrente(isFixa)
             .recorrenciaAtiva(true)
+            .debitoAutomatico(debitoAutomatico)
+            .pago(pago)
             .build();
 
         Despesa saved = despesaRepository.save(despesa);
+        sincronizarComprovante(saved, request.getUrlComprovante(), usuario);
         return mapToResponse(saved);
+    }
+
+    private void sincronizarComprovante(Despesa despesa, String urlComprovante, Usuario usuario) {
+        if (urlComprovante == null || urlComprovante.isBlank() || !urlComprovante.startsWith("data:")) {
+            return;
+        }
+        try {
+            int virgula = urlComprovante.indexOf(',');
+            if (virgula <= 0) return;
+            String header = urlComprovante.substring(5, virgula);
+            String mime = header.contains(";") ? header.substring(0, header.indexOf(';')) : header;
+            byte[] dados = java.util.Base64.getDecoder().decode(urlComprovante.substring(virgula + 1));
+
+            comprovanteRepository.findByDespesaId(despesa.getId())
+                .ifPresent(c -> comprovanteRepository.deleteById(c.getId()));
+
+            String extensao = mime.contains("pdf") ? "pdf" : (mime.contains("png") ? "png" : "jpg");
+            String nomeArquivo = "despesa-" + despesa.getId() + "-" + despesa.getDescricao().replaceAll("[^a-zA-Z0-9]", "_") + "." + extensao;
+
+            com.nossagrana.backend.entity.Comprovante comp = com.nossagrana.backend.entity.Comprovante.builder()
+                .nome(nomeArquivo)
+                .mimeType(mime)
+                .dados(dados)
+                .mes(despesa.getDataTransacao().getMonthValue())
+                .ano(despesa.getDataTransacao().getYear())
+                .despesaId(despesa.getId())
+                .casal(despesa.getCasal())
+                .usuario(usuario)
+                .build();
+            comprovanteRepository.save(comp);
+        } catch (Exception e) {
+            log.warn("Falha ao sincronizar comprovante da despesa {}: {}", despesa.getId(), e.getMessage());
+        }
     }
 
     public List<DespesaResponse> listarDespesasMes(Long casalId, int mes, int ano) {
@@ -122,7 +162,15 @@ public class DespesaService {
         despesa.setMetodoPagamento(request.getMetodoPagamento());
         despesa.setObservacoes(request.getObservacoes());
         despesa.setUrlComprovante(request.getUrlComprovante());
+        if (request.getDebitoAutomatico() != null) {
+            despesa.setDebitoAutomatico(request.getDebitoAutomatico());
+        }
+        if (request.getPago() != null) {
+            despesa.setPago(request.getPago());
+        }
         despesa.setEditada(true);
+
+        sincronizarComprovante(despesa, request.getUrlComprovante(), usuario);
 
         // Mantém consistência: se mudou para não-FIXA, desativa recorrência
         if (!"FIXA".equalsIgnoreCase(request.getTipoDespesa()) && Boolean.TRUE.equals(despesa.getRecorrente())) {
@@ -173,8 +221,9 @@ public class DespesaService {
     }
 
     /**
-     * Chamado pelo scheduler no dia 1 de cada mês.
-     * Gera instâncias das despesas fixas recorrentes ativas.
+     * Chamado pelo scheduler diariamente.
+     * Gera instâncias das despesas fixas recorrentes ativas cuja data de
+     * recorrência (mesmo dia do mês da despesa origem) já chegou no mês corrente.
      */
     @Transactional
     public void gerarInstanciasMensais() {
@@ -183,7 +232,7 @@ public class DespesaService {
         int ano = hoje.getYear();
 
         List<Despesa> recorrentes = despesaRepository.findAllRecorrentesAtivas();
-        log.info("Gerando instancias mensais para {} despesas recorrentes - {}/{}", recorrentes.size(), mes, ano);
+        log.info("Verificando geracao de instancias para {} despesas recorrentes - {}/{}", recorrentes.size(), mes, ano);
 
         for (Despesa origem : recorrentes) {
             // Não gera se foi cancelada antes do mês atual
@@ -194,14 +243,31 @@ public class DespesaService {
                 }
             }
 
-            // Evita duplicatas
-            if (despesaRepository.existeInstanciaParaMes(origem.getId(), mes, ano)) {
-                log.info("Instancia ja existe para origem {} em {}/{}", origem.getId(), mes, ano);
+            // Não gera no mesmo mês/ano da despesa origem (ela já é a primeira ocorrência)
+            LocalDate dataOrigem = origem.getDataTransacao();
+            if (dataOrigem.getYear() == ano && dataOrigem.getMonthValue() == mes) {
                 continue;
             }
 
+            // Data alvo no mês corrente: mesmo dia da despesa origem, ajustando p/ último dia do mês se necessário
+            LocalDate primeiroDiaMes = LocalDate.of(ano, mes, 1);
+            int diaAlvo = Math.min(dataOrigem.getDayOfMonth(), primeiroDiaMes.lengthOfMonth());
+            LocalDate dataAlvo = LocalDate.of(ano, mes, diaAlvo);
+
+            // Ainda não chegou o dia da recorrência
+            if (hoje.isBefore(dataAlvo)) {
+                continue;
+            }
+
+            // Evita duplicatas
+            if (despesaRepository.existeInstanciaParaMes(origem.getId(), mes, ano)) {
+                continue;
+            }
+
+            boolean debitoAutomatico = Boolean.TRUE.equals(origem.getDebitoAutomatico());
+
             Despesa instancia = Despesa.builder()
-                .dataTransacao(LocalDate.of(ano, mes, 1))
+                .dataTransacao(dataAlvo)
                 .descricao(origem.getDescricao())
                 .valor(origem.getValor())
                 .categoria(origem.getCategoria())
@@ -214,11 +280,29 @@ public class DespesaService {
                 .recorrente(true)
                 .recorrenciaAtiva(true)
                 .despesaOrigemId(origem.getId())
+                .debitoAutomatico(debitoAutomatico)
+                .pago(debitoAutomatico)
                 .build();
 
             despesaRepository.save(instancia);
-            log.info("Instancia gerada para origem {} em {}/{}", origem.getId(), mes, ano);
+            log.info("Instancia gerada para origem {} em {} (debito automatico={})", origem.getId(), dataAlvo, debitoAutomatico);
         }
+    }
+
+    @Transactional
+    public DespesaResponse alternarPago(Long despesaId, Long usuarioId) {
+        Despesa despesa = despesaRepository.findById(despesaId)
+            .orElseThrow(() -> new ResourceNotFoundException("Despesa nao encontrada"));
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
+
+        if (!despesa.getCasal().getId().equals(usuario.getCasal().getId())) {
+            throw new ForbiddenException("Sem permissao para alterar esta despesa");
+        }
+
+        despesa.setPago(!Boolean.TRUE.equals(despesa.getPago()));
+        return mapToResponse(despesaRepository.save(despesa));
     }
 
     private void registrarEdicao(Despesa despesa, String campo, String valorAntigo, String valorNovo, Usuario usuario) {
@@ -264,6 +348,8 @@ public class DespesaService {
             .recorrente(despesa.getRecorrente())
             .recorrenciaAtiva(despesa.getRecorrenciaAtiva())
             .despesaOrigemId(despesa.getDespesaOrigemId())
+            .pago(despesa.getPago())
+            .debitoAutomatico(despesa.getDebitoAutomatico())
             .build();
     }
 

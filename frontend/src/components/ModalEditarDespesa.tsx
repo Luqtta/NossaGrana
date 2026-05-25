@@ -50,6 +50,8 @@ export const ModalEditarDespesa = ({ despesa, isOpen, onClose, onSuccess }: Moda
         metodoPagamento: despesa.metodoPagamento,
         observacoes: despesa.observacoes || '',
         urlComprovante: despesa.urlComprovante,
+        pago: despesa.pago,
+        debitoAutomatico: despesa.debitoAutomatico,
       });
       setComprovantePreview(despesa.urlComprovante || null);
       carregarDados();

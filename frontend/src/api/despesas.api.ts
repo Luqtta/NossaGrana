@@ -44,6 +44,11 @@ export const despesasApi = {
     return response.data;
   },
 
+  alternarPago: async (id: number): Promise<Despesa> => {
+    const response = await api.patch(`/despesas/${id}/pago`);
+    return response.data;
+  },
+
   buscarHistorico: async (id: number): Promise<HistoricoEdicaoItem[]> => {
     const response = await api.get(`/despesas/${id}/historico`);
     return response.data;

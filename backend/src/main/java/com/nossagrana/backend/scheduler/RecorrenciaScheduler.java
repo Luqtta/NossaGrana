@@ -14,12 +14,12 @@ public class RecorrenciaScheduler {
     private final DespesaService despesaService;
 
     /**
-     * Executa todo dia 1 de cada mês à meia-noite (UTC).
-     * Gera automaticamente as instâncias das despesas fixas recorrentes.
+     * Executa diariamente à 01:00 (UTC).
+     * Gera instâncias das despesas fixas recorrentes no mesmo dia do mês da despesa origem.
      */
-    @Scheduled(cron = "0 0 1 1 * ?")
+    @Scheduled(cron = "0 0 1 * * ?")
     public void gerarDespesasRecorrentes() {
-        log.info("Iniciando geracao de despesas recorrentes mensais...");
+        log.info("Iniciando verificacao diaria de despesas recorrentes...");
         try {
             despesaService.gerarInstanciasMensais();
             log.info("Geracao de despesas recorrentes concluida com sucesso.");
