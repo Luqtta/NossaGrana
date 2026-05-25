@@ -196,13 +196,19 @@ export const Personalizar = () => {
                   style={{ backgroundColor: c }}
                 />
               ))}
-              <label className="flex items-center gap-2 ml-2">
-                <input
-                  type="color"
-                  value={cor}
-                  onChange={(e) => setCor(e.target.value)}
-                  className="w-10 h-10 rounded-full cursor-pointer"
-                />
+              <label className="flex items-center gap-2 ml-2 cursor-pointer">
+                <span
+                  className="relative w-10 h-10 rounded-full border-4 border-transparent shadow-inner overflow-hidden block"
+                  style={{ backgroundColor: cor }}
+                >
+                  <input
+                    type="color"
+                    value={cor}
+                    onChange={(e) => setCor(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    title="Escolher cor personalizada"
+                  />
+                </span>
                 <span className="text-sm text-gray-600 dark:text-gray-400">Personalizada</span>
               </label>
             </div>
