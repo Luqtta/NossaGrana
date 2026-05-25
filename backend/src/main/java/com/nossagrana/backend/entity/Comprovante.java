@@ -25,8 +25,7 @@ public class Comprovante {
     @Column(name = "mime_type", nullable = false, length = 100)
     private String mimeType;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "bytea")
     private byte[] dados;
 
     @Column(nullable = false)

@@ -25,8 +25,7 @@ public class PreferenciasDashboard {
     @Column(name = "imagem_fundo_mime", length = 100)
     private String imagemFundoMime;
 
-    @Lob
-    @Column(name = "imagem_fundo")
+    @Column(name = "imagem_fundo", columnDefinition = "bytea")
     private byte[] imagemFundo;
 
     @Column(name = "opacidade_fundo")
