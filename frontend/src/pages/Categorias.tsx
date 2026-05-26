@@ -11,7 +11,7 @@ import { EmojiPickerInput } from '../components/EmojiPickerInput';
 import type { Categoria } from '../types/despesa.types';
 import { fazerLogout } from '../utils/logout';
 import { cache } from '../utils/cache';
-import { cacheKeys, invalidarCategoria } from '../utils/cacheKeys';
+import { cacheKeys } from '../utils/cacheKeys';
 
 const CACHE_KEY_CATEGORIAS_DETALHADAS = 'categorias:detalhadas';
 

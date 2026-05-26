@@ -9,7 +9,7 @@ import { usuarioApi, type UsuarioResponse } from '../api/usuario.api';
 import type { CasalData } from '../api/casal.api';
 import { fazerLogout } from '../utils/logout';
 import { cache } from '../utils/cache';
-import { cacheKeys, invalidarCasal } from '../utils/cacheKeys';
+import { cacheKeys } from '../utils/cacheKeys';
 
 export const Configuracoes = () => {
   const navigate = useNavigate();
