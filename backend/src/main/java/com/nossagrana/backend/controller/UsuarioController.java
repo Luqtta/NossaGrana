@@ -9,7 +9,9 @@ import com.nossagrana.backend.dto.SolicitarTrocaEmailRequest;
 import com.nossagrana.backend.dto.UsuarioResponse;
 import com.nossagrana.backend.entity.Usuario;
 import com.nossagrana.backend.security.AutenticacaoHelper;
+import com.nossagrana.backend.security.RefreshCookieUtil;
 import com.nossagrana.backend.service.UsuarioService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ public class UsuarioController {
 
     private final AutenticacaoHelper autenticacaoHelper;
     private final UsuarioService usuarioService;
+    private final RefreshCookieUtil refreshCookie;
 
     @GetMapping("/me")
     public ResponseEntity<UsuarioResponse> buscarMeuUsuario() {
@@ -49,9 +52,15 @@ public class UsuarioController {
     }
 
     @PostMapping("/me/email/confirmar")
-    public ResponseEntity<AuthResponse> confirmarTrocaEmail(@Valid @RequestBody ConfirmarTrocaEmailRequest request) {
+    public ResponseEntity<AuthResponse> confirmarTrocaEmail(@Valid @RequestBody ConfirmarTrocaEmailRequest request,
+                                                            HttpServletResponse httpResponse) {
         Usuario usuario = autenticacaoHelper.getUsuarioAtual();
-        return ResponseEntity.ok(usuarioService.confirmarTrocaEmail(usuario, request.getCodigo()));
+        AuthResponse resp = usuarioService.confirmarTrocaEmail(usuario, request.getCodigo());
+        if (resp != null && resp.getRefreshToken() != null) {
+            refreshCookie.escrever(httpResponse, resp.getRefreshToken());
+            resp.setRefreshToken(null);
+        }
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/me/senha/solicitar")

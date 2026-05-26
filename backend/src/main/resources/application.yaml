@@ -33,7 +33,10 @@ brevo:
   api-key: ${BREVO_API_KEY}
 
 app:
-  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  # FRONTEND_URL eh obrigatorio em prod. Em dev (perfil dev) o application-dev.yaml define o default local.
+  frontend-url: ${FRONTEND_URL}
+  # Em prod (HTTPS): true. Em dev local: definido no application-dev.yaml.
+  cookie-secure: ${COOKIE_SECURE:true}
 
 logging:
   level:

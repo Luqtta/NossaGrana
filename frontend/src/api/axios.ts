@@ -5,6 +5,9 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Necessário para que o cookie HttpOnly do refresh token seja enviado nas
+  // requisições para /auth/refresh e /auth/logout (cross-origin).
+  withCredentials: true,
 });
 
 // Adiciona o access token em toda request
@@ -50,25 +53,18 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
-
-      if (!refreshToken) {
-        isRefreshing = false;
-        localStorage.clear();
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-
       try {
+        // O refresh token vai no cookie HttpOnly automaticamente (withCredentials: true).
+        // Nao mandamos nada no body — o backend le do cookie.
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/refresh`,
-          { refreshToken }
+          {},
+          { withCredentials: true },
         );
 
-        const { token, refreshToken: newRefreshToken } = response.data;
+        const { token } = response.data;
 
         localStorage.setItem('token', token);
-        localStorage.setItem('refreshToken', newRefreshToken);
 
         api.defaults.headers.common.Authorization = `Bearer ${token}`;
         originalRequest.headers.Authorization = `Bearer ${token}`;

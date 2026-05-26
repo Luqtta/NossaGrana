@@ -8,6 +8,7 @@ import com.nossagrana.backend.dto.SaldoCategoriaResponse;
 import com.nossagrana.backend.entity.Categoria;
 import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.service.CategoriaService;
+import com.nossagrana.backend.util.InputValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +46,7 @@ public class CategoriaController {
             @RequestParam int mes,
             @RequestParam int ano
     ) {
+        InputValidator.validarMesAno(mes, ano);
         return ResponseEntity.ok(categoriaService.buscarSaldoCategoria(categoriaId, mes, ano, autenticacaoHelper.getUsuarioAtual()));
     }
 

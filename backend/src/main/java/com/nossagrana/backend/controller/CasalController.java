@@ -5,6 +5,7 @@ import com.nossagrana.backend.dto.MetaMensalRequest;
 import com.nossagrana.backend.entity.Casal;
 import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.service.CasalService;
+import com.nossagrana.backend.util.InputValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +64,7 @@ public class CasalController {
             @PathVariable Long casalId,
             @RequestParam int mes,
             @RequestParam int ano) {
+        InputValidator.validarMesAno(mes, ano);
         autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(casalService.buscarEstatisticas(casalId, mes, ano));
     }

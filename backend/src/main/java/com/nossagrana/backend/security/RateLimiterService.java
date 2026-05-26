@@ -1,53 +1,57 @@
 package com.nossagrana.backend.security;
 
+import com.nossagrana.backend.entity.RateLimitEntry;
 import com.nossagrana.backend.exception.BusinessException;
+import com.nossagrana.backend.repository.RateLimitEntryRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Rate limiter em memória para endpoints sensíveis.
- * Usa janela deslizante por chave (email ou IP).
+ * Rate limiter persistente em tabela. Sobrevive a restart do app e funciona
+ * em multiplas instancias compartilhando o mesmo banco. Janela deslizante
+ * por chave (email ou IP).
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class RateLimiterService {
 
-    // chave -> timestamps das últimas tentativas (epoch millis)
-    private final Map<String, Deque<Long>> registros = new ConcurrentHashMap<>();
+    private final RateLimitEntryRepository repository;
 
-    /**
-     * Verifica e registra uma tentativa. Lança exceção se o limite for excedido.
-     *
-     * @param chave         identificador (ex: "login:email@x.com" ou "reset:email@x.com")
-     * @param maxTentativas número máximo de tentativas na janela
-     * @param janelaMilis   tamanho da janela em milissegundos
-     */
+    @Transactional
     public void verificar(String chave, int maxTentativas, long janelaMilis) {
         long agora = Instant.now().toEpochMilli();
-        long limite = agora - janelaMilis;
+        long desde = agora - janelaMilis;
 
-        Deque<Long> timestamps = registros.computeIfAbsent(chave, k -> new ArrayDeque<>());
-
-        synchronized (timestamps) {
-            // remove entradas fora da janela
-            while (!timestamps.isEmpty() && timestamps.peekFirst() < limite) {
-                timestamps.pollFirst();
-            }
-
-            if (timestamps.size() >= maxTentativas) {
-                throw new BusinessException("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
-            }
-
-            timestamps.addLast(agora);
+        long usadas = repository.contar(chave, desde);
+        if (usadas >= maxTentativas) {
+            throw new BusinessException("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
         }
+
+        repository.save(RateLimitEntry.builder().chave(chave).timestampMs(agora).build());
     }
 
-    /** Limpa o registro de uma chave (ex: após login bem-sucedido). */
+    @Transactional
     public void limpar(String chave) {
-        registros.remove(chave);
+        repository.limparPorChave(chave);
+    }
+
+    /**
+     * Limpeza automatica: a cada hora remove entradas com mais de 24h.
+     * Mantem a tabela enxuta sem precisar de cron externo.
+     */
+    @Scheduled(fixedDelay = 3_600_000L, initialDelay = 60_000L)
+    @Transactional
+    public void limparAntigos() {
+        long limite = Instant.now().toEpochMilli() - 86_400_000L; // 24h
+        int removidos = repository.limparAntigos(limite);
+        if (removidos > 0) {
+            log.info("Rate limiter: removeu {} entradas antigas", removidos);
+        }
     }
 }

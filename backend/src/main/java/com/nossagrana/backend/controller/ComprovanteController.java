@@ -6,6 +6,7 @@ import com.nossagrana.backend.entity.Comprovante;
 import com.nossagrana.backend.entity.Usuario;
 import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.service.ComprovanteService;
+import com.nossagrana.backend.util.InputValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -42,6 +43,7 @@ public class ComprovanteController {
             @PathVariable Long casalId,
             @PathVariable int mes,
             @PathVariable int ano) {
+        InputValidator.validarMesAno(mes, ano);
         autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(comprovanteService.listarPorMes(casalId, mes, ano));
     }

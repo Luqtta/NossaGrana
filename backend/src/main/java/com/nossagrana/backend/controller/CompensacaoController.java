@@ -6,6 +6,7 @@ import com.nossagrana.backend.dto.CompensacaoResponse;
 import com.nossagrana.backend.entity.Usuario;
 import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.service.CompensacaoService;
+import com.nossagrana.backend.util.InputValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,7 @@ public class CompensacaoController {
             @PathVariable Long casalId,
             @PathVariable int mes,
             @PathVariable int ano) {
+        InputValidator.validarMesAno(mes, ano);
         autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(compensacaoService.listarPorMes(casalId, mes, ano));
     }
@@ -58,6 +60,7 @@ public class CompensacaoController {
             @PathVariable Long casalId,
             @RequestParam int mes,
             @RequestParam int ano) {
+        InputValidator.validarMesAno(mes, ano);
         autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(compensacaoService.calcularAcerto(casalId, mes, ano));
     }

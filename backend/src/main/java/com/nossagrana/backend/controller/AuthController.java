@@ -2,11 +2,14 @@ package com.nossagrana.backend.controller;
 
 import com.nossagrana.backend.dto.*;
 import com.nossagrana.backend.entity.Usuario;
+import com.nossagrana.backend.exception.ForbiddenException;
 import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.security.RateLimiterService;
+import com.nossagrana.backend.security.RefreshCookieUtil;
 import com.nossagrana.backend.service.AuthService;
 import com.nossagrana.backend.service.VerificacaoService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +25,7 @@ public class AuthController {
     private final VerificacaoService verificacaoService;
     private final RateLimiterService rateLimiter;
     private final AutenticacaoHelper autenticacaoHelper;
+    private final RefreshCookieUtil refreshCookie;
 
     // 5 tentativas por minuto por e-mail
     private static final int LOGIN_MAX = 5;
@@ -38,21 +42,30 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
-                                              HttpServletRequest httpRequest) {
+                                              HttpServletRequest httpRequest,
+                                              HttpServletResponse httpResponse) {
         rateLimiter.verificar("login:" + request.getEmail().toLowerCase(), LOGIN_MAX, LOGIN_JANELA);
         AuthResponse response = authService.login(request);
         rateLimiter.limpar("login:" + request.getEmail().toLowerCase());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(selarCookie(response, httpResponse));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request) {
-        return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
+    public ResponseEntity<AuthResponse> refresh(HttpServletRequest httpRequest,
+                                                HttpServletResponse httpResponse) {
+        String token = refreshCookie.ler(httpRequest);
+        if (token == null) {
+            throw new ForbiddenException("Refresh token nao encontrado");
+        }
+        AuthResponse response = authService.refresh(token);
+        return ResponseEntity.ok(selarCookie(response, httpResponse));
     }
 
     @PostMapping("/verificar-email")
-    public ResponseEntity<AuthResponse> verificarEmail(@Valid @RequestBody VerificarEmailRequest request) {
-        return ResponseEntity.ok(verificacaoService.verificarEmail(request.getUsuarioId(), request.getCodigo()));
+    public ResponseEntity<AuthResponse> verificarEmail(@Valid @RequestBody VerificarEmailRequest request,
+                                                       HttpServletResponse httpResponse) {
+        AuthResponse response = verificacaoService.verificarEmail(request.getUsuarioId(), request.getCodigo());
+        return ResponseEntity.ok(selarCookie(response, httpResponse));
     }
 
     @PostMapping("/reenviar-verificacao")
@@ -76,9 +89,19 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(HttpServletResponse httpResponse) {
         Usuario usuario = autenticacaoHelper.getUsuarioAtual();
         authService.logout(usuario);
+        refreshCookie.limpar(httpResponse);
         return ResponseEntity.ok().build();
+    }
+
+    /** Move o refresh token do body do response para o cookie HttpOnly. */
+    private AuthResponse selarCookie(AuthResponse response, HttpServletResponse httpResponse) {
+        if (response != null && response.getRefreshToken() != null) {
+            refreshCookie.escrever(httpResponse, response.getRefreshToken());
+            response.setRefreshToken(null);
+        }
+        return response;
     }
 }

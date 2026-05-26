@@ -34,6 +34,7 @@ public class ConviteService {
     private final CategoriaRepository categoriaRepository;
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
+    private final AuditLogService auditLog;
 
     @Transactional
     public void criarConvite(Long casalId, String emailConvidado, Long usuarioId) {
@@ -71,6 +72,7 @@ public class ConviteService {
         conviteRepository.save(convite);
 
         emailService.enviarConvite(emailConvidado, parceiro1.getNome(), convite.getCodigo());
+        auditLog.registrar(AuditLogService.CONVITE_ENVIADO, parceiro1, "para: " + emailConvidado);
     }
 
     @Transactional(readOnly = true)
@@ -137,6 +139,8 @@ public class ConviteService {
             categoriaRepository.deleteByCasalId(oldCasalId);
             casalRepository.deleteById(oldCasalId);
         }
+
+        auditLog.registrar(AuditLogService.CONVITE_ACEITO, parceiro2, "casal id=" + casalP1.getId());
 
         return AuthResponse.builder()
             .token(jwtUtil.generateToken(parceiro2.getEmail(), parceiro2.getTokenVersao() != null ? parceiro2.getTokenVersao() : 0))

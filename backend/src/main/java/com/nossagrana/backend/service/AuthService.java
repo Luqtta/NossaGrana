@@ -14,10 +14,12 @@ import com.nossagrana.backend.repository.CasalRepository;
 import com.nossagrana.backend.repository.UsuarioRepository;
 import com.nossagrana.backend.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -28,6 +30,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final VerificacaoService verificacaoService;
+    private final AuditLogService auditLog;
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
@@ -50,6 +53,7 @@ public class AuthService {
         novoUsuario = usuarioRepository.save(novoUsuario);
 
         verificacaoService.gerarEEnviarCodigoVerificacao(novoUsuario);
+        auditLog.registrar(AuditLogService.REGISTRO, novoUsuario, null);
 
         return RegisterResponse.builder()
                 .usuarioId(novoUsuario.getId())
@@ -62,17 +66,36 @@ public class AuthService {
         // Mensagem unica para email-nao-cadastrado e senha-incorreta:
         // evita enumeracao de emails registrados.
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
-            .orElseThrow(() -> new ForbiddenException("Email ou senha incorretos"));
+            .orElseThrow(() -> {
+                log.info("[AUTH] login falhou - email nao encontrado: {}", maskEmail(request.getEmail()));
+                auditLog.registrarSemUsuario(AuditLogService.LOGIN_FALHA, "email nao encontrado: " + maskEmail(request.getEmail()));
+                return new ForbiddenException("Email ou senha incorretos");
+            });
 
         if (!passwordEncoder.matches(request.getSenha(), usuario.getSenha())) {
+            log.info("[AUTH] login falhou - senha incorreta para usuario id={}", usuario.getId());
+            auditLog.registrar(AuditLogService.LOGIN_FALHA, usuario, "senha incorreta");
             throw new ForbiddenException("Email ou senha incorretos");
         }
 
         if (Boolean.FALSE.equals(usuario.getEmailVerificado())) {
+            log.info("[AUTH] login bloqueado - email nao verificado, usuario id={}", usuario.getId());
+            auditLog.registrar(AuditLogService.LOGIN_FALHA, usuario, "email nao verificado");
             throw new EmailNaoVerificadoException(usuario.getId());
         }
 
+        log.info("[AUTH] login ok - usuario id={}", usuario.getId());
+        auditLog.registrar(AuditLogService.LOGIN_SUCESSO, usuario, null);
         return buildAuthResponse(usuario, usuario.getCasal() != null ? usuario.getCasal().getId() : null);
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return "***";
+        int at = email.indexOf('@');
+        String user = email.substring(0, at);
+        String dom = email.substring(at);
+        String maskedUser = user.length() <= 2 ? "**" : user.charAt(0) + "***" + user.charAt(user.length() - 1);
+        return maskedUser + dom;
     }
 
     public AuthResponse refresh(String refreshToken) {
@@ -98,6 +121,8 @@ public class AuthService {
         int atual = usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0;
         usuario.setTokenVersao(atual + 1);
         usuarioRepository.save(usuario);
+        log.info("[AUTH] logout - usuario id={}", usuario.getId());
+        auditLog.registrar(AuditLogService.LOGOUT, usuario, null);
     }
 
     private AuthResponse buildAuthResponse(Usuario usuario, Long casalId) {

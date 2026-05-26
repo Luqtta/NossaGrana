@@ -21,7 +21,7 @@ export const Login = () => {
       const response = await api.post<AuthResponse>('/auth/login', loginData);
 
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
+      // refresh token agora vem no cookie HttpOnly — nao precisa armazenar
       localStorage.setItem('user', JSON.stringify(response.data));
 
       toast.success('Login realizado com sucesso!');

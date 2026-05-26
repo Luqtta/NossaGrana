@@ -11,7 +11,8 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   token: string;
-  refreshToken: string;
+  /** Sempre null no novo fluxo — refresh token agora vai no cookie HttpOnly. Mantido pra compat. */
+  refreshToken?: string | null;
   id: number;
   nome: string;
   email: string;

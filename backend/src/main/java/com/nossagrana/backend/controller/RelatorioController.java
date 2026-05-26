@@ -2,6 +2,7 @@ package com.nossagrana.backend.controller;
 
 import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.service.RelatorioService;
+import com.nossagrana.backend.util.InputValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ public class RelatorioController {
             @RequestParam int mes,
             @RequestParam int ano
     ) {
+        InputValidator.validarMesAno(mes, ano);
         autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(relatorioService.gastosPorCategoria(casalId, mes, ano));
     }
@@ -32,6 +34,7 @@ public class RelatorioController {
             @RequestParam Long casalId,
             @RequestParam int ano
     ) {
+        InputValidator.validarMesAno(1, ano);
         autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(relatorioService.evolucaoMensal(casalId, ano));
     }
@@ -42,6 +45,7 @@ public class RelatorioController {
             @RequestParam int mes,
             @RequestParam int ano
     ) {
+        InputValidator.validarMesAno(mes, ano);
         autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(relatorioService.comparacaoParceiros(casalId, mes, ano));
     }
@@ -53,7 +57,10 @@ public class RelatorioController {
             @RequestParam String dataFim
     ) {
         autenticacaoHelper.validarAcessoCasal(casalId);
-        return ResponseEntity.ok(relatorioService.gastosPorCategoriaCustom(casalId, LocalDate.parse(dataInicio), LocalDate.parse(dataFim)));
+        LocalDate inicio = LocalDate.parse(dataInicio);
+        LocalDate fim = LocalDate.parse(dataFim);
+        InputValidator.validarPeriodo(inicio, fim);
+        return ResponseEntity.ok(relatorioService.gastosPorCategoriaCustom(casalId, inicio, fim));
     }
 
     @GetMapping("/comparacao-parceiros/periodo")
@@ -63,6 +70,9 @@ public class RelatorioController {
             @RequestParam String dataFim
     ) {
         autenticacaoHelper.validarAcessoCasal(casalId);
-        return ResponseEntity.ok(relatorioService.comparacaoParceiroCustom(casalId, LocalDate.parse(dataInicio), LocalDate.parse(dataFim)));
+        LocalDate inicio = LocalDate.parse(dataInicio);
+        LocalDate fim = LocalDate.parse(dataFim);
+        InputValidator.validarPeriodo(inicio, fim);
+        return ResponseEntity.ok(relatorioService.comparacaoParceiroCustom(casalId, inicio, fim));
     }
 }

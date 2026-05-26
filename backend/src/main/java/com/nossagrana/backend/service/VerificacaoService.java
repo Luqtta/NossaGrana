@@ -25,6 +25,7 @@ public class VerificacaoService {
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLog;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final String CHARS = "0123456789";
@@ -87,6 +88,7 @@ public class VerificacaoService {
 
         usuario.setEmailVerificado(true);
         usuarioRepository.save(usuario);
+        auditLog.registrar(AuditLogService.EMAIL_VERIFICADO, usuario, null);
 
         return AuthResponse.builder()
                 .token(jwtUtil.generateToken(usuario.getEmail(), usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0))
@@ -164,6 +166,7 @@ public class VerificacaoService {
         usuario.setEmailPendente(null);
         usuario.setEmailVerificado(true);
         usuarioRepository.save(usuario);
+        auditLog.registrar(AuditLogService.TROCA_EMAIL, usuario, "novo email: " + novoEmail);
 
         return AuthResponse.builder()
             .token(jwtUtil.generateToken(usuario.getEmail(), usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0))
@@ -220,6 +223,7 @@ public class VerificacaoService {
         int versao = usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0;
         usuario.setTokenVersao(versao + 1);
         usuarioRepository.save(usuario);
+        auditLog.registrar(AuditLogService.TROCA_SENHA, usuario, null);
     }
 
     @Transactional
@@ -283,5 +287,6 @@ public class VerificacaoService {
         int versao = usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0;
         usuario.setTokenVersao(versao + 1);
         usuarioRepository.save(usuario);
+        auditLog.registrar(AuditLogService.RESET_SENHA, usuario, null);
     }
 }

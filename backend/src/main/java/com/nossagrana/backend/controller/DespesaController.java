@@ -6,6 +6,7 @@ import com.nossagrana.backend.entity.HistoricoEdicao;
 import com.nossagrana.backend.entity.Usuario;
 import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.service.DespesaService;
+import com.nossagrana.backend.util.InputValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,7 @@ public class DespesaController {
             @PathVariable Long casalId,
             @PathVariable int mes,
             @PathVariable int ano) {
+        InputValidator.validarMesAno(mes, ano);
         autenticacaoHelper.validarAcessoCasal(casalId);
         return ResponseEntity.ok(despesaService.listarDespesasMes(casalId, mes, ano));
     }
@@ -83,6 +85,7 @@ public class DespesaController {
         autenticacaoHelper.validarAcessoCasal(casalId);
         LocalDate inicio = LocalDate.parse(dataInicio);
         LocalDate fim = LocalDate.parse(dataFim);
+        InputValidator.validarPeriodo(inicio, fim);
         return ResponseEntity.ok(despesaService.filtrar(casalId, categoriaId, responsavel, tipoDespesa, descricao, inicio, fim));
     }
 }

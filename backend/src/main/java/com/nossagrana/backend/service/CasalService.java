@@ -28,6 +28,7 @@ public class CasalService {
     private final PasswordEncoder passwordEncoder;
     private final DespesaRepository despesaRepository;
     private final CategoriaPadraoService categoriaPadraoService;
+    private final AuditLogService auditLog;
     
     public Casal buscarPorId(Long id) {
         return casalRepository.findById(id)
@@ -88,6 +89,9 @@ public class CasalService {
         casal.setConviteAceito(false);
 
         casalRepository.save(casal);
+
+        usuarioRepository.findFirstByCasalIdAndEhParceiro1(casalId, true)
+            .ifPresent(p1 -> auditLog.registrar(AuditLogService.PARCEIRO_REMOVIDO, p1, "casal id=" + casalId));
     }
     
     public void atualizarNomes(Long casalId, String nomeParceiro1, String nomeParceiro2) {

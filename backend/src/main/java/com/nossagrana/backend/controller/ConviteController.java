@@ -5,7 +5,9 @@ import com.nossagrana.backend.dto.ConviteInfoResponse;
 import com.nossagrana.backend.dto.ConviteRequest;
 import com.nossagrana.backend.entity.Usuario;
 import com.nossagrana.backend.security.AutenticacaoHelper;
+import com.nossagrana.backend.security.RefreshCookieUtil;
 import com.nossagrana.backend.service.ConviteService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ public class ConviteController {
 
     private final ConviteService conviteService;
     private final AutenticacaoHelper autenticacaoHelper;
+    private final RefreshCookieUtil refreshCookie;
 
     @PostMapping
     public ResponseEntity<Void> criarConvite(@Valid @RequestBody ConviteRequest request) {
@@ -32,8 +35,14 @@ public class ConviteController {
     }
 
     @PostMapping("/{codigo}/aceitar")
-    public ResponseEntity<AuthResponse> aceitarConvite(@PathVariable String codigo) {
+    public ResponseEntity<AuthResponse> aceitarConvite(@PathVariable String codigo,
+                                                       HttpServletResponse httpResponse) {
         Usuario usuario = autenticacaoHelper.getUsuarioAtual();
-        return ResponseEntity.ok(conviteService.aceitarConvite(codigo, usuario.getId()));
+        AuthResponse resp = conviteService.aceitarConvite(codigo, usuario.getId());
+        if (resp != null && resp.getRefreshToken() != null) {
+            refreshCookie.escrever(httpResponse, resp.getRefreshToken());
+            resp.setRefreshToken(null);
+        }
+        return ResponseEntity.ok(resp);
     }
 }

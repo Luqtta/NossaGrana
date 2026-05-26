@@ -45,7 +45,7 @@ export const AceitarConvite = () => {
 
       // Update stored user data with new casal info
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
+      // refresh token agora vem no cookie HttpOnly
       localStorage.setItem('user', JSON.stringify(response.data));
 
       toast.success('Bem-vindo ao casal! Seus dados anteriores foram removidos.');
