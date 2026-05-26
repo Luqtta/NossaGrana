@@ -139,8 +139,8 @@ public class ConviteService {
         }
 
         return AuthResponse.builder()
-            .token(jwtUtil.generateToken(parceiro2.getEmail()))
-            .refreshToken(jwtUtil.generateRefreshToken(parceiro2.getEmail()))
+            .token(jwtUtil.generateToken(parceiro2.getEmail(), parceiro2.getTokenVersao() != null ? parceiro2.getTokenVersao() : 0))
+            .refreshToken(jwtUtil.generateRefreshToken(parceiro2.getEmail(), parceiro2.getTokenVersao() != null ? parceiro2.getTokenVersao() : 0))
             .id(parceiro2.getId())
             .nome(parceiro2.getNome())
             .email(parceiro2.getEmail())

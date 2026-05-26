@@ -59,11 +59,13 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        // Mensagem unica para email-nao-cadastrado e senha-incorreta:
+        // evita enumeracao de emails registrados.
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
-            .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+            .orElseThrow(() -> new ForbiddenException("Email ou senha incorretos"));
 
         if (!passwordEncoder.matches(request.getSenha(), usuario.getSenha())) {
-            throw new ForbiddenException("Senha incorreta");
+            throw new ForbiddenException("Email ou senha incorretos");
         }
 
         if (Boolean.FALSE.equals(usuario.getEmailVerificado())) {
@@ -82,13 +84,27 @@ public class AuthService {
         Usuario usuario = usuarioRepository.findByEmail(email)
             .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
+        Integer versaoToken = jwtUtil.getTokenVersao(refreshToken);
+        int versaoUsuario = usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0;
+        if (versaoToken == null || versaoToken != versaoUsuario) {
+            throw new ForbiddenException("Sessão expirada. Faça login novamente");
+        }
+
         return buildAuthResponse(usuario, usuario.getCasal() != null ? usuario.getCasal().getId() : null);
     }
 
+    @Transactional
+    public void logout(Usuario usuario) {
+        int atual = usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0;
+        usuario.setTokenVersao(atual + 1);
+        usuarioRepository.save(usuario);
+    }
+
     private AuthResponse buildAuthResponse(Usuario usuario, Long casalId) {
+        int versao = usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0;
         return AuthResponse.builder()
-            .token(jwtUtil.generateToken(usuario.getEmail()))
-            .refreshToken(jwtUtil.generateRefreshToken(usuario.getEmail()))
+            .token(jwtUtil.generateToken(usuario.getEmail(), versao))
+            .refreshToken(jwtUtil.generateRefreshToken(usuario.getEmail(), versao))
             .id(usuario.getId())
             .nome(usuario.getNome())
             .email(usuario.getEmail())

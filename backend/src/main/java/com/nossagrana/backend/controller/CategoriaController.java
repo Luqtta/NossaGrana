@@ -1,17 +1,19 @@
 package com.nossagrana.backend.controller;
 
+import com.nossagrana.backend.dto.CategoriaCriarRequest;
+import com.nossagrana.backend.dto.CategoriaEditarRequest;
 import com.nossagrana.backend.dto.CategoriaResponse;
+import com.nossagrana.backend.dto.OrcamentoRequest;
 import com.nossagrana.backend.dto.SaldoCategoriaResponse;
 import com.nossagrana.backend.entity.Categoria;
 import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.service.CategoriaService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/categorias")
@@ -31,10 +33,9 @@ public class CategoriaController {
     @PutMapping("/{categoriaId}/orcamento")
     public ResponseEntity<String> definirOrcamento(
             @PathVariable Long categoriaId,
-            @RequestBody Map<String, BigDecimal> request
+            @Valid @RequestBody OrcamentoRequest request
     ) {
-        BigDecimal orcamento = request.get("orcamento");
-        categoriaService.definirOrcamento(categoriaId, orcamento, autenticacaoHelper.getUsuarioAtual());
+        categoriaService.definirOrcamento(categoriaId, request.getOrcamento(), autenticacaoHelper.getUsuarioAtual());
         return ResponseEntity.ok("Orçamento definido com sucesso!");
     }
 
@@ -48,22 +49,23 @@ public class CategoriaController {
     }
 
     @PostMapping
-    public ResponseEntity<Categoria> criar(@RequestBody Map<String, Object> request) {
-        String nome = (String) request.get("nome");
-        String icone = (String) request.get("icone");
-        String cor = (String) request.get("cor");
-        BigDecimal orcamento = new BigDecimal(request.get("orcamento").toString());
-        Long casalId = ((Number) request.get("casalId")).longValue();
-        autenticacaoHelper.validarAcessoCasal(casalId);
-        return ResponseEntity.ok(categoriaService.criar(nome, icone, cor, orcamento, casalId));
+    public ResponseEntity<Categoria> criar(@Valid @RequestBody CategoriaCriarRequest request) {
+        autenticacaoHelper.validarAcessoCasal(request.getCasalId());
+        return ResponseEntity.ok(categoriaService.criar(
+            request.getNome(),
+            request.getIcone(),
+            request.getCor(),
+            request.getOrcamento(),
+            request.getCasalId()
+        ));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<String> editar(
             @PathVariable Long id,
-            @RequestBody Map<String, String> request
+            @Valid @RequestBody CategoriaEditarRequest request
     ) {
-        categoriaService.editar(id, request.get("nome"), request.get("icone"), request.get("cor"), autenticacaoHelper.getUsuarioAtual());
+        categoriaService.editar(id, request.getNome(), request.getIcone(), request.getCor(), autenticacaoHelper.getUsuarioAtual());
         return ResponseEntity.ok("Categoria atualizada!");
     }
 

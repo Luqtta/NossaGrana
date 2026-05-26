@@ -25,22 +25,31 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String email) {
-        return buildToken(email, expiration, "access");
+    public String generateToken(String email, int tokenVersao) {
+        return buildToken(email, expiration, "access", tokenVersao);
     }
 
-    public String generateRefreshToken(String email) {
-        return buildToken(email, refreshExpiration, "refresh");
+    public String generateRefreshToken(String email, int tokenVersao) {
+        return buildToken(email, refreshExpiration, "refresh", tokenVersao);
     }
 
-    private String buildToken(String email, long expiryMs, String type) {
+    private String buildToken(String email, long expiryMs, String type, int tokenVersao) {
         return Jwts.builder()
                 .subject(email)
                 .claim("type", type)
+                .claim("v", tokenVersao)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiryMs))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public Integer getTokenVersao(String token) {
+        try {
+            return getClaims(token).get("v", Integer.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public String getEmailFromToken(String token) {

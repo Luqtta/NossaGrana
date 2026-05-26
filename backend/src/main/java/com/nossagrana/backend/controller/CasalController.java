@@ -1,13 +1,15 @@
 package com.nossagrana.backend.controller;
 
+import com.nossagrana.backend.dto.AtualizarNomesRequest;
+import com.nossagrana.backend.dto.MetaMensalRequest;
 import com.nossagrana.backend.entity.Casal;
 import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.service.CasalService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -35,18 +37,18 @@ public class CasalController {
     @PutMapping("/{casalId}/atualizar-nomes")
     public ResponseEntity<String> atualizarNomes(
             @PathVariable Long casalId,
-            @RequestBody Map<String, String> request) {
+            @Valid @RequestBody AtualizarNomesRequest request) {
         autenticacaoHelper.validarAcessoCasal(casalId);
-        casalService.atualizarNomes(casalId, request.get("nomeParceiro1"), request.get("nomeParceiro2"));
+        casalService.atualizarNomes(casalId, request.getNomeParceiro1(), request.getNomeParceiro2());
         return ResponseEntity.ok("Nomes atualizados com sucesso!");
     }
 
     @PutMapping("/{casalId}/meta")
     public ResponseEntity<String> definirMeta(
             @PathVariable Long casalId,
-            @RequestBody Map<String, BigDecimal> request) {
+            @Valid @RequestBody MetaMensalRequest request) {
         autenticacaoHelper.validarAcessoCasal(casalId);
-        casalService.definirMeta(casalId, request.get("metaMensal"));
+        casalService.definirMeta(casalId, request.getMetaMensal());
         return ResponseEntity.ok("Meta definida com sucesso!");
     }
 

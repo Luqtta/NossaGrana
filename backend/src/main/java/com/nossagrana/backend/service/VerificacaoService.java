@@ -89,8 +89,8 @@ public class VerificacaoService {
         usuarioRepository.save(usuario);
 
         return AuthResponse.builder()
-                .token(jwtUtil.generateToken(usuario.getEmail()))
-                .refreshToken(jwtUtil.generateRefreshToken(usuario.getEmail()))
+                .token(jwtUtil.generateToken(usuario.getEmail(), usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0))
+                .refreshToken(jwtUtil.generateRefreshToken(usuario.getEmail(), usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0))
                 .id(usuario.getId())
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
@@ -166,8 +166,8 @@ public class VerificacaoService {
         usuarioRepository.save(usuario);
 
         return AuthResponse.builder()
-            .token(jwtUtil.generateToken(usuario.getEmail()))
-            .refreshToken(jwtUtil.generateRefreshToken(usuario.getEmail()))
+            .token(jwtUtil.generateToken(usuario.getEmail(), usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0))
+            .refreshToken(jwtUtil.generateRefreshToken(usuario.getEmail(), usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0))
             .id(usuario.getId())
             .nome(usuario.getNome())
             .email(usuario.getEmail())
@@ -217,6 +217,8 @@ public class VerificacaoService {
         codigoRepo.save(cv);
 
         usuario.setSenha(passwordEncoder.encode(novaSenha));
+        int versao = usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0;
+        usuario.setTokenVersao(versao + 1);
         usuarioRepository.save(usuario);
     }
 
@@ -278,6 +280,8 @@ public class VerificacaoService {
         codigoRepo.save(cv);
 
         usuario.setSenha(passwordEncoder.encode(novaSenha));
+        int versao = usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0;
+        usuario.setTokenVersao(versao + 1);
         usuarioRepository.save(usuario);
     }
 }

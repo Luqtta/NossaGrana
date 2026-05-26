@@ -39,9 +39,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             if (jwtUtil.validateToken(token) && !jwtUtil.isRefreshToken(token)) {
                 String email = jwtUtil.getEmailFromToken(token);
+                Integer versaoToken = jwtUtil.getTokenVersao(token);
 
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     usuarioRepository.findByEmail(email).ifPresent(usuario -> {
+                        int versaoUsuario = usuario.getTokenVersao() != null ? usuario.getTokenVersao() : 0;
+                        // Rejeita token cujo claim de versao nao bate com o banco
+                        // (revogado por logout ou troca de senha) ou sem claim (token antigo).
+                        if (versaoToken == null || versaoToken != versaoUsuario) {
+                            return;
+                        }
                         if (Boolean.TRUE.equals(usuario.getEmailVerificado())) {
                             UsernamePasswordAuthenticationToken authentication =
                                     new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());

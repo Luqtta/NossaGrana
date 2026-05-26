@@ -50,4 +50,9 @@ public class Usuario {
     // Campo preparado para futura funcionalidade de ganhos/salario
     @Column(name = "renda_mensal")
     private Double rendaMensal;
+
+    // Incrementado em logout / troca de senha — invalida tokens com versao anterior.
+    @Builder.Default
+    @Column(name = "token_versao", nullable = false, columnDefinition = "integer not null default 0")
+    private Integer tokenVersao = 0;
 }

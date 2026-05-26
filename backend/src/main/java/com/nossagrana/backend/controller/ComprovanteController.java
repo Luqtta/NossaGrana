@@ -51,9 +51,17 @@ public class ComprovanteController {
         Usuario usuario = autenticacaoHelper.getUsuarioAtual();
         Comprovante c = comprovanteService.baixar(id, usuario.getId());
 
+        // Imagens podem ser inline (preview no app); PDFs forcam download para evitar
+        // execucao de scripts via PDF.js de extensoes.
+        String mime = c.getMimeType();
+        boolean isImagem = mime != null && mime.startsWith("image/");
+        String disposicao = isImagem ? "inline" : "attachment";
+        String filename = c.getNome().replace("\"", "");
+
         return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(c.getMimeType()))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + c.getNome() + "\"")
+            .contentType(MediaType.parseMediaType(mime))
+            .header(HttpHeaders.CONTENT_DISPOSITION, disposicao + "; filename=\"" + filename + "\"")
+            .header("X-Content-Type-Options", "nosniff")
             .body(c.getDados());
     }
 

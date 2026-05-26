@@ -1,6 +1,8 @@
 package com.nossagrana.backend.controller;
 
 import com.nossagrana.backend.dto.*;
+import com.nossagrana.backend.entity.Usuario;
+import com.nossagrana.backend.security.AutenticacaoHelper;
 import com.nossagrana.backend.security.RateLimiterService;
 import com.nossagrana.backend.service.AuthService;
 import com.nossagrana.backend.service.VerificacaoService;
@@ -19,6 +21,7 @@ public class AuthController {
     private final AuthService authService;
     private final VerificacaoService verificacaoService;
     private final RateLimiterService rateLimiter;
+    private final AutenticacaoHelper autenticacaoHelper;
 
     // 5 tentativas por minuto por e-mail
     private static final int LOGIN_MAX = 5;
@@ -69,6 +72,13 @@ public class AuthController {
     @PostMapping("/reset-senha")
     public ResponseEntity<Void> resetarSenha(@Valid @RequestBody ResetSenhaRequest request) {
         verificacaoService.resetarSenha(request.getEmail(), request.getCodigo(), request.getNovaSenha());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        Usuario usuario = autenticacaoHelper.getUsuarioAtual();
+        authService.logout(usuario);
         return ResponseEntity.ok().build();
     }
 }
