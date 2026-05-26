@@ -219,9 +219,9 @@ export const Dashboard = () => {
     valorGasto: number,
     subtitulo: string,
   ) => (
-    <div className="flex items-center gap-3 min-w-0 flex-1">
+    <div className="flex items-end gap-3 min-w-0 flex-1">
       <div
-        className="w-16 h-16 rounded-full shrink-0 shadow-md flex items-center justify-center text-white font-bold text-xl overflow-hidden border-[3px] border-white dark:border-gray-800"
+        className="w-20 h-20 rounded-full shrink-0 shadow-lg flex items-center justify-center text-white font-bold text-xl overflow-hidden border-[4px] border-gray-50 dark:border-gray-900 translate-y-1/2"
         style={{ backgroundColor: 'var(--cor-destaque, #10b981)' }}
       >
         {foto ? (
@@ -230,7 +230,7 @@ export const Dashboard = () => {
           iniciaisDoNome(nome)
         )}
       </div>
-      <div className="min-w-0 text-white drop-shadow">
+      <div className="min-w-0 text-white drop-shadow pb-3">
         <h3 className="font-bold truncate text-lg leading-tight">{nome}</h3>
         <p className="text-xs text-white/85 truncate">
           {subtitulo} · R$ {formatBRL(valorGasto)}
@@ -249,7 +249,7 @@ export const Dashboard = () => {
       <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
         {/* Banner full-width com parceiros + botão Nova Despesa */}
         <div
-          className="relative bg-cover bg-center min-h-[180px] shadow-lg opacity-0"
+          className="relative bg-cover bg-center min-h-[220px] shadow-lg opacity-0"
           style={{
             animation: 'fadeInUp 0.6s ease-out forwards',
             ...(imagemBannerUrl
@@ -262,8 +262,8 @@ export const Dashboard = () => {
             style={{ opacity: 1 - opacidadeBanner / 100 }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30 pointer-events-none" />
-          <div className="relative max-w-7xl mx-auto px-4 py-6">
-            <div className="flex items-start justify-end mb-3">
+          <div className="relative max-w-7xl mx-auto px-4 pt-6 min-h-[220px] flex flex-col">
+            <div className="flex items-start justify-end">
               <button
                 onClick={() => navigate('/nova-despesa')}
                 className="text-white px-4 py-2 rounded-xl font-semibold hover:brightness-110 transition shadow-lg flex items-center gap-2 backdrop-blur-sm"
@@ -273,7 +273,7 @@ export const Dashboard = () => {
                 Nova Despesa
               </button>
             </div>
-            <div className={`grid gap-6 ${isSolo ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
+            <div className={`mt-auto grid gap-6 ${isSolo ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
               {renderParceiroInfo(
                 parceiro1?.fotoPerfil,
                 estatisticas?.nomeParceiro1 || parceiro1?.nome || 'Parceiro 1',
@@ -290,7 +290,7 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-7xl mx-auto px-4 pt-16 pb-6">
           {/* Alertas de Orçamento */}
           {categoriasSobreOrcamento.length > 0 && (
             <div
