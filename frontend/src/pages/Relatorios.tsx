@@ -11,6 +11,8 @@ import { relatoriosApi } from '../api/relatorios.api';
 import { casalApi } from '../api/casal.api';
 import { formatBRL } from '../utils/formatBRL';
 import { Sidebar } from '../components/Sidebar';
+import { LegendaPizza } from '../components/LegendaPizza';
+import { FileDown } from 'lucide-react';
 import type { CasalData } from '../api/casal.api';
 import { fazerLogout } from '../utils/logout';
 import { cache } from '../utils/cache';
@@ -146,9 +148,9 @@ export const Relatorios = () => {
             </div>
             <button
               onClick={() => setModalPDF(true)}
-              className="bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition font-medium"
+              className="bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition font-medium flex items-center gap-2"
             >
-              📄 Exportar PDF
+              <FileDown size={16} /> Exportar PDF
             </button>
           </div>
 
@@ -242,41 +244,47 @@ export const Relatorios = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfico de Pizza - Gastos por Categoria */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 opacity-0" style={{ animation: 'fadeInUp 0.6s ease-out 0.2s forwards' }}>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">🥧 Gastos por Categoria</h3>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Gastos por Categoria</h3>
                   {dadosPizza.length === 0 ? (
                     <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
                       Nenhum dado para este período
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height={280}>
-                      <PieChart>
-                        <Pie
-                          data={dadosPizza}
-                          dataKey="valor"
-                          nameKey="categoria"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={90}
-                          label={({ categoria, percent }: any) => `${categoria} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                          labelLine={false}
-                          isAnimationActive={true}
-                          animationBegin={300}
-                          animationDuration={1200}
-                        >
-                          {dadosPizza.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.cor} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => formatCurrency(value as number)} contentStyle={tooltipStyle} itemStyle={{ color: '#e5e7eb' }} labelStyle={{ color: '#f9fafb', fontWeight: 'bold' }} />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <>
+                      <ResponsiveContainer width="100%" height={240}>
+                        <PieChart>
+                          <Pie
+                            data={dadosPizza}
+                            dataKey="valor"
+                            nameKey="categoria"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={95}
+                            paddingAngle={1.5}
+                            stroke="none"
+                            labelLine={false}
+                            isAnimationActive={true}
+                            animationBegin={300}
+                            animationDuration={1200}
+                          >
+                            {dadosPizza.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.cor} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => formatCurrency(value as number)} contentStyle={tooltipStyle} itemStyle={{ color: '#e5e7eb' }} labelStyle={{ color: '#f9fafb', fontWeight: 'bold' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <LegendaPizza
+                        itens={dadosPizza.map(d => ({ nome: d.categoria, valor: d.valor, cor: d.cor }))}
+                      />
+                    </>
                   )}
                 </div>
 
                 {/* Gráfico de Linha - Evolução Mensal */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 opacity-0" style={{ animation: 'fadeInUp 0.6s ease-out 0.3s forwards' }}>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">📈 Evolução Mensal {ano}</h3>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Evolução Mensal {ano}</h3>
                   <ResponsiveContainer width="100%" height={280}>
                     <LineChart data={dadosLinha}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -303,7 +311,7 @@ export const Relatorios = () => {
 
               {/* Gráfico de Barras - Comparação de Parceiros */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 opacity-0" style={{ animation: 'fadeInUp 0.6s ease-out 0.4s forwards' }}>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">📊 Comparação por Parceiro e Categoria</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Comparação por Parceiro e Categoria</h3>
                 {dadosBarras.length === 0 ? (
                   <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
                     Nenhum dado para este período

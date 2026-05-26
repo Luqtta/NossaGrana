@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Settings, ArrowRightLeft } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { LegendaPizza } from '../components/LegendaPizza';
 import { Sidebar } from '../components/Sidebar';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import { SkeletonCard } from '../components/SkeletonCard';
@@ -746,44 +747,43 @@ export const Dashboard = () => {
                   <p className="text-gray-500 dark:text-gray-400">Sem dados para mostrar</p>
                 </div>
               ) : (
-                <div style={{ width: '100%', height: 280 }}>
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie
-                        data={dadosPorCategoria}
-                        dataKey="valor"
-                        nameKey="nome"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={95}
-                        paddingAngle={2}
-                        labelLine={false}
-                        label={({ percent }) => percent && percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
-                      >
-                        {dadosPorCategoria.map((entry, idx) => (
-                          <Cell key={idx} fill={entry.cor} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value) => `R$ ${formatBRL(Number(value) || 0)}`}
-                        contentStyle={{
-                          backgroundColor: 'rgba(31, 41, 55, 0.95)',
-                          border: 'none',
-                          borderRadius: '8px',
-                          color: '#fff',
-                        }}
-                        labelStyle={{ color: '#fff' }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        height={36}
-                        iconType="circle"
-                        wrapperStyle={{ fontSize: '11px' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <>
+                  <div style={{ width: '100%', height: 220 }}>
+                    <ResponsiveContainer>
+                      <PieChart>
+                        <Pie
+                          data={dadosPorCategoria}
+                          dataKey="valor"
+                          nameKey="nome"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={95}
+                          paddingAngle={1.5}
+                          stroke="none"
+                          labelLine={false}
+                        >
+                          {dadosPorCategoria.map((entry, idx) => (
+                            <Cell key={idx} fill={entry.cor} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value) => `R$ ${formatBRL(Number(value) || 0)}`}
+                          contentStyle={{
+                            backgroundColor: 'rgba(31, 41, 55, 0.95)',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: '#fff',
+                          }}
+                          labelStyle={{ color: '#fff' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <LegendaPizza
+                    itens={dadosPorCategoria.map(d => ({ nome: d.nome, valor: d.valor, cor: d.cor }))}
+                  />
+                </>
               )}
             </div>
           </div>
