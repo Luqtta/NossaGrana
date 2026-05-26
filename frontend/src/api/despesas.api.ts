@@ -1,5 +1,6 @@
 import { api } from './axios';
 import type { Despesa, DespesaRequest } from '../types/despesa.types';
+import { invalidarDespesasEDerivados } from '../utils/cacheKeys';
 
 const getCasalId = (): number => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -21,6 +22,7 @@ export interface FiltrosDespesas {
 export const despesasApi = {
   criar: async (despesa: DespesaRequest): Promise<Despesa> => {
     const response = await api.post('/despesas', despesa);
+    invalidarDespesasEDerivados();
     return response.data;
   },
 
@@ -32,20 +34,24 @@ export const despesasApi = {
 
   atualizar: async (id: number, despesa: DespesaRequest): Promise<Despesa> => {
     const response = await api.put(`/despesas/${id}`, despesa);
+    invalidarDespesasEDerivados();
     return response.data;
   },
 
   deletar: async (id: number): Promise<void> => {
     await api.delete(`/despesas/${id}`);
+    invalidarDespesasEDerivados();
   },
 
   cancelarRecorrencia: async (id: number): Promise<Despesa> => {
     const response = await api.patch(`/despesas/${id}/cancelar-recorrencia`);
+    invalidarDespesasEDerivados();
     return response.data;
   },
 
   alternarPago: async (id: number): Promise<Despesa> => {
     const response = await api.patch(`/despesas/${id}/pago`);
+    invalidarDespesasEDerivados();
     return response.data;
   },
 

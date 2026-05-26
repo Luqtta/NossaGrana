@@ -9,6 +9,11 @@ import { Sidebar } from '../components/Sidebar';
 import { CurrencyInput } from '../components/CurrencyInput';
 import { EmojiPickerInput } from '../components/EmojiPickerInput';
 import type { Categoria } from '../types/despesa.types';
+import { fazerLogout } from '../utils/logout';
+import { cache } from '../utils/cache';
+import { cacheKeys, invalidarCategoria } from '../utils/cacheKeys';
+
+const CACHE_KEY_CATEGORIAS_DETALHADAS = 'categorias:detalhadas';
 
 interface CategoriaComSaldo extends Categoria {
   orcamentoMensal: number;
@@ -17,8 +22,8 @@ interface CategoriaComSaldo extends Categoria {
 
 export const Categorias = () => {
   const navigate = useNavigate();
-  const [categorias, setCategorias] = useState<CategoriaComSaldo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categorias, setCategorias] = useState<CategoriaComSaldo[]>(() => cache.get<CategoriaComSaldo[]>(CACHE_KEY_CATEGORIAS_DETALHADAS) || []);
+  const [loading, setLoading] = useState(() => !cache.has(CACHE_KEY_CATEGORIAS_DETALHADAS));
   const [modalOrcamento, setModalOrcamento] = useState<CategoriaComSaldo | null>(null);
   const [modalCriar, setModalCriar] = useState(false);
   const [modalEditar, setModalEditar] = useState<CategoriaComSaldo | null>(null);
@@ -37,17 +42,21 @@ export const Categorias = () => {
   }, []);
 
   const carregarCategorias = async () => {
+    const temCache = cache.has(CACHE_KEY_CATEGORIAS_DETALHADAS);
+    if (!temCache) setLoading(true);
     try {
-      setLoading(true);
       const [data, casalData] = await Promise.all([
         categoriasApi.listarPorCasal(),
         casalApi.buscar(user.casalId).catch(() => null),
       ]);
       setMetaMensal(casalData?.metaMensal ?? 0);
+      cache.set(cacheKeys.categorias, data);
+      if (casalData) cache.set(cacheKeys.casal(user.casalId), casalData);
       const categoriasComSaldo = await Promise.all(
         data.map(async (cat) => {
           try {
             const saldo = await categoriasApi.buscarSaldo(cat.id, mes, ano);
+            cache.set(cacheKeys.saldoCategoria(cat.id, mes, ano), saldo);
             return { ...cat, orcamentoMensal: cat.orcamentoMensal ?? 0, saldo };
           } catch {
             return { ...cat, orcamentoMensal: cat.orcamentoMensal ?? 0 };
@@ -55,8 +64,9 @@ export const Categorias = () => {
         })
       );
       setCategorias(categoriasComSaldo);
+      cache.set(CACHE_KEY_CATEGORIAS_DETALHADAS, categoriasComSaldo);
     } catch {
-      toast.error('Erro ao carregar categorias');
+      if (!temCache) toast.error('Erro ao carregar categorias');
     } finally {
       setLoading(false);
     }
@@ -146,10 +156,7 @@ export const Categorias = () => {
     setModalEditar(cat);
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  const handleLogout = () => fazerLogout(navigate);
 
   const getStatusColor = (status?: string) => {
     if (status === 'VERMELHO') return 'text-red-600 dark:text-red-400';

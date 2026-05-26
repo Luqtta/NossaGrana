@@ -1,5 +1,6 @@
 import { api } from './axios';
 import type { AuthResponse } from '../types/auth.types';
+import { cache } from '../utils/cache';
 
 export interface UsuarioResponse {
   id: number;
@@ -18,11 +19,13 @@ export const usuarioApi = {
 
   atualizarNome: async (nome: string): Promise<UsuarioResponse> => {
     const response = await api.put('/usuarios/me/nome', { nome });
+    cache.invalidate('casal:');
     return response.data;
   },
 
   atualizarFoto: async (fotoPerfil: string | null): Promise<UsuarioResponse> => {
     const response = await api.put('/usuarios/me/foto', { fotoPerfil });
+    cache.invalidate('casal:membros:');
     return response.data;
   },
 

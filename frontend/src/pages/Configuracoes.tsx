@@ -1,16 +1,21 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Pencil } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar';
 import { Modal } from '../components/Modal';
 import { casalApi } from '../api/casal.api';
 import { usuarioApi, type UsuarioResponse } from '../api/usuario.api';
 import type { CasalData } from '../api/casal.api';
+import { fazerLogout } from '../utils/logout';
+import { cache } from '../utils/cache';
+import { cacheKeys, invalidarCasal } from '../utils/cacheKeys';
 
 export const Configuracoes = () => {
   const navigate = useNavigate();
-  const [casal, setCasal] = useState<CasalData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const userInit = JSON.parse(localStorage.getItem('user') || '{}');
+  const [casal, setCasal] = useState<CasalData | null>(() => cache.get<CasalData>(cacheKeys.casal(userInit.casalId)) || null);
+  const [loading, setLoading] = useState(() => !cache.has(cacheKeys.casal(userInit.casalId)));
   const [showConvite, setShowConvite] = useState(false);
   const [showRemoverModal, setShowRemoverModal] = useState(false);
 
@@ -39,12 +44,14 @@ export const Configuracoes = () => {
   }, []);
 
   const carregarCasal = async () => {
+    const temCache = cache.has(cacheKeys.casal(userData.casalId));
+    if (!temCache) setLoading(true);
     try {
-      setLoading(true);
       const data = await casalApi.buscar(userData.casalId);
       setCasal(data);
+      cache.set(cacheKeys.casal(userData.casalId), data);
     } catch {
-      toast.error('Erro ao carregar configuracoes');
+      if (!temCache) toast.error('Erro ao carregar configuracoes');
     } finally {
       setLoading(false);
     }
@@ -110,17 +117,36 @@ export const Configuracoes = () => {
     }
   };
 
-  const handleSalvarFoto = async () => {
+  const handleSalvarFoto = async (foto: string | null) => {
     setSalvandoFoto(true);
     try {
-      const response = await usuarioApi.atualizarFoto(fotoPreview);
+      const response = await usuarioApi.atualizarFoto(foto);
       atualizarUserLocal(response);
-      toast.success('Foto atualizada');
+      setFotoPreview(response.fotoPerfil || null);
+      toast.success(foto ? 'Foto atualizada' : 'Foto removida');
     } catch {
       toast.error('Erro ao atualizar foto');
+      setFotoPreview(userData.fotoPerfil || null);
     } finally {
       setSalvandoFoto(false);
     }
+  };
+
+  const handleSelecionarArquivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Maximo 3MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setFotoPreview(base64);
+      handleSalvarFoto(base64);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handleEnviarCodigoEmail = async () => {
@@ -210,13 +236,9 @@ export const Configuracoes = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  const handleLogout = () => fazerLogout(navigate);
 
   const nomeAlterado = nomeConta.trim() && nomeConta.trim() !== (userData.nome || '');
-  const fotoAlterada = (fotoPreview || null) !== (userData.fotoPerfil || null);
 
   if (loading) {
     return (
@@ -252,58 +274,54 @@ export const Configuracoes = () => {
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Perfil da conta</h3>
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex flex-col items-center md:items-start gap-3">
-                {fotoPreview ? (
-                  <img
-                    src={fotoPreview}
-                    alt="Perfil"
-                    className="w-24 h-24 rounded-full object-cover border border-gray-200 dark:border-gray-600"
-                  />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-2xl font-bold border border-emerald-200 dark:border-emerald-800">
-                    {userInitials || 'NG'}
+                <label className="relative group cursor-pointer">
+                  {fotoPreview ? (
+                    <img
+                      src={fotoPreview}
+                      alt="Perfil"
+                      className="w-24 h-24 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-2xl font-bold border border-emerald-200 dark:border-emerald-800">
+                      {userInitials || 'NG'}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-full bg-black/55 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    {salvandoFoto ? (
+                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Pencil size={22} className="text-white" />
+                    )}
                   </div>
-                )}
-                <label className="w-full text-center md:text-left">
-                  <span className="inline-flex items-center justify-center w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer text-sm font-medium">
-                    Selecionar foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={salvandoFoto}
+                    onChange={handleSelecionarArquivo}
+                  />
+                </label>
+                <label className="text-center md:text-left">
+                  <span className="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer text-xs font-medium">
+                    Trocar foto
                   </span>
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      if (file.size > 3 * 1024 * 1024) {
-                        toast.error('Arquivo muito grande. Maximo 3MB.');
-                        return;
-                      }
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        const base64 = reader.result as string;
-                        setFotoPreview(base64);
-                      };
-                      reader.readAsDataURL(file);
-                    }}
+                    disabled={salvandoFoto}
+                    onChange={handleSelecionarArquivo}
                   />
                 </label>
-                {fotoPreview && (
+                {fotoPreview && !salvandoFoto && (
                   <button
                     type="button"
-                    onClick={() => setFotoPreview(null)}
+                    onClick={() => handleSalvarFoto(null)}
                     className="text-xs text-red-500 hover:text-red-700 transition"
                   >
                     Remover foto
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={handleSalvarFoto}
-                  disabled={!fotoAlterada || salvandoFoto}
-                  className="w-full bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition disabled:opacity-60"
-                >
-                  {salvandoFoto ? 'Salvando...' : 'Salvar foto'}
-                </button>
               </div>
 
               <div className="flex-1 space-y-4">

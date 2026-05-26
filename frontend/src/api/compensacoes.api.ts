@@ -5,6 +5,7 @@ import type {
   CompensacaoRequest,
   MembroCasal,
 } from '../types/compensacao.types';
+import { cache } from '../utils/cache';
 
 const getCasalId = (): number => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -15,6 +16,8 @@ const getCasalId = (): number => {
 export const compensacoesApi = {
   criar: async (data: CompensacaoRequest): Promise<Compensacao> => {
     const response = await api.post('/compensacoes', data);
+    cache.invalidate('compensacoes:');
+    cache.invalidate('acerto:');
     return response.data;
   },
 
@@ -26,11 +29,15 @@ export const compensacoesApi = {
 
   atualizar: async (id: number, data: CompensacaoRequest): Promise<Compensacao> => {
     const response = await api.put(`/compensacoes/${id}`, data);
+    cache.invalidate('compensacoes:');
+    cache.invalidate('acerto:');
     return response.data;
   },
 
   inativar: async (id: number): Promise<void> => {
     await api.delete(`/compensacoes/${id}`);
+    cache.invalidate('compensacoes:');
+    cache.invalidate('acerto:');
   },
 
   calcularAcerto: async (mes: number, ano: number): Promise<AcertoMensalResponse> => {

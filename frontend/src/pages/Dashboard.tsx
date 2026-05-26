@@ -16,6 +16,9 @@ import type { Despesa, Categoria } from '../types/despesa.types';
 import type { AcertoMensalResponse } from '../types/compensacao.types';
 import { formatBRL } from '../utils/formatBRL';
 import { CurrencyInput } from '../components/CurrencyInput';
+import { fazerLogout } from '../utils/logout';
+import { cache } from '../utils/cache';
+import { cacheKeys } from '../utils/cacheKeys';
 
 const iniciaisDoNome = (nome?: string | null) => {
   if (!nome) return '?';
@@ -25,22 +28,28 @@ const iniciaisDoNome = (nome?: string | null) => {
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const [despesas, setDespesas] = useState<Despesa[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [estatisticas, setEstatisticas] = useState<EstatisticasData | null>(null);
-  const [casal, setCasal] = useState<CasalData | null>(null);
-  const [membros, setMembros] = useState<MembroCasal[]>([]);
-  const [acerto, setAcerto] = useState<AcertoMensalResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const mesAtual = new Date().getMonth() + 1;
+  const anoAtual = new Date().getFullYear();
+  const casalId: number = user.casalId;
+
+  const [despesas, setDespesas] = useState<Despesa[]>(() => cache.get<Despesa[]>(cacheKeys.despesasMes(mesAtual, anoAtual)) || []);
+  const [categorias, setCategorias] = useState<Categoria[]>(() => cache.get<Categoria[]>(cacheKeys.categorias) || []);
+  const [estatisticas, setEstatisticas] = useState<EstatisticasData | null>(() => cache.get<EstatisticasData>(cacheKeys.estatisticas(casalId, mesAtual, anoAtual)) || null);
+  const [casal, setCasal] = useState<CasalData | null>(() => cache.get<CasalData>(cacheKeys.casal(casalId)) || null);
+  const [membros, setMembros] = useState<MembroCasal[]>(() => cache.get<MembroCasal[]>(cacheKeys.membros(casalId)) || []);
+  const [acerto, setAcerto] = useState<AcertoMensalResponse | null>(() => cache.get<AcertoMensalResponse>(cacheKeys.acerto(mesAtual, anoAtual)) || null);
+  const hasCachedDashboard = !!cache.get(cacheKeys.estatisticas(casalId, mesAtual, anoAtual));
+  const [loading, setLoading] = useState(!hasCachedDashboard);
   const [editMeta, setEditMeta] = useState(false);
   const [metaInput, setMetaInput] = useState(0);
   const [salvandoMeta, setSalvandoMeta] = useState(false);
   const [corDestaque, setCorDestaque] = useState('#10b981');
   const [imagemBannerUrl, setImagemBannerUrl] = useState<string | null>(null);
+  const [opacidadeBanner, setOpacidadeBanner] = useState(50);
   const [ordemCards, setOrdemCards] = useState<CardId[]>(CARDS_DISPONIVEIS.map(c => c.id));
   const [cardsEscondidos, setCardsEscondidos] = useState<Set<CardId>>(new Set());
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
   const lastClickRef = useRef<number>(0);
 
   const handleCardClick = () => {
@@ -63,6 +72,7 @@ export const Dashboard = () => {
         setCorDestaque(pref.corDestaque);
         document.documentElement.style.setProperty('--cor-destaque', pref.corDestaque);
       }
+      if (typeof pref.opacidadeFundo === 'number') setOpacidadeBanner(pref.opacidadeFundo);
       if (pref.ordemCards) {
         try {
           const arr = JSON.parse(pref.ordemCards) as CardId[];
@@ -91,17 +101,16 @@ export const Dashboard = () => {
 
   const carregarDados = async () => {
     try {
-      setLoading(true);
-      const mes = new Date().getMonth() + 1;
-      const ano = new Date().getFullYear();
+      const mes = mesAtual;
+      const ano = anoAtual;
 
       const [despesasData, categoriasData, statsData, casalData, acertoData, membrosData] = await Promise.all([
         despesasApi.listarPorMes(mes, ano),
         categoriasApi.listarPorCasal(),
-        casalApi.buscarEstatisticas(user.casalId, mes, ano),
-        casalApi.buscar(user.casalId),
+        casalApi.buscarEstatisticas(casalId, mes, ano),
+        casalApi.buscar(casalId),
         compensacoesApi.calcularAcerto(mes, ano),
-        casalApi.buscarMembros(user.casalId),
+        casalApi.buscarMembros(casalId),
       ]);
 
       setDespesas(despesasData);
@@ -110,8 +119,15 @@ export const Dashboard = () => {
       setCasal(casalData);
       setAcerto(acertoData);
       setMembros(membrosData);
+
+      cache.set(cacheKeys.despesasMes(mes, ano), despesasData);
+      cache.set(cacheKeys.categorias, categoriasData);
+      cache.set(cacheKeys.estatisticas(casalId, mes, ano), statsData);
+      cache.set(cacheKeys.casal(casalId), casalData);
+      cache.set(cacheKeys.acerto(mes, ano), acertoData);
+      cache.set(cacheKeys.membros(casalId), membrosData);
     } catch (error) {
-      toast.error('Erro ao carregar dados');
+      if (!hasCachedDashboard) toast.error('Erro ao carregar dados');
     } finally {
       setLoading(false);
     }
@@ -152,10 +168,7 @@ export const Dashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  const handleLogout = () => fazerLogout(navigate);
 
   if (loading) {
     return (
@@ -243,7 +256,11 @@ export const Dashboard = () => {
               : { background: `linear-gradient(135deg, var(--cor-destaque, #10b981), #1e293b)` }),
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/40 to-black/65" />
+          <div
+            className="absolute inset-0 bg-black pointer-events-none"
+            style={{ opacity: 1 - opacidadeBanner / 100 }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30 pointer-events-none" />
           <div className="relative max-w-7xl mx-auto px-4 py-6">
             <div className="flex items-start justify-end mb-3">
               <button

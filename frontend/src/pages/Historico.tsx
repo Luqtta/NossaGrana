@@ -14,6 +14,9 @@ import { ModalExportarPDF } from '../components/ModalExportarPDF';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import type { Despesa, Categoria } from '../types/despesa.types';
 import type { CasalData } from '../api/casal.api';
+import { fazerLogout } from '../utils/logout';
+import { cache } from '../utils/cache';
+import { cacheKeys } from '../utils/cacheKeys';
 
 const SkeletonRow = () => (
   <div className="flex items-center justify-between p-6 animate-pulse">
@@ -30,11 +33,13 @@ const SkeletonRow = () => (
 
 export const Historico = () => {
   const navigate = useNavigate();
-  const [despesas, setDespesas] = useState<Despesa[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [casal, setCasal] = useState<CasalData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [mesAno, setMesAno] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`);
+  const [anoInicial, mesInicial] = mesAno.split('-').map(Number);
+  const [despesas, setDespesas] = useState<Despesa[]>(() => cache.get<Despesa[]>(cacheKeys.despesasMes(mesInicial, anoInicial)) || []);
+  const [categorias, setCategorias] = useState<Categoria[]>(() => cache.get<Categoria[]>(cacheKeys.categorias) || []);
+  const [casal, setCasal] = useState<CasalData | null>(() => cache.get<CasalData>(cacheKeys.casal(user.casalId)) || null);
+  const [loading, setLoading] = useState(() => !cache.has(cacheKeys.despesasMes(mesInicial, anoInicial)));
   const [acertoMensal, setAcertoMensal] = useState<AcertoMensalCalculado | null>(null);
 
   const [despesaEditando, setDespesaEditando] = useState<Despesa | null>(null);
@@ -50,8 +55,6 @@ export const Historico = () => {
 
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 20;
-
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
     carregarDados();
@@ -76,10 +79,11 @@ export const Historico = () => {
   }, [filtros, mostrarFiltros]);
 
   const carregarDados = async () => {
+    const [ano, mes] = mesAno.split('-').map(Number);
+    const temCache = cache.has(cacheKeys.despesasMes(mes, ano));
+    if (!temCache) setLoading(true);
+    setAcertoMensal(null);
     try {
-      setLoading(true);
-      setAcertoMensal(null);
-      const [ano, mes] = mesAno.split('-').map(Number);
       const [data, cats, casalData] = await Promise.all([
         despesasApi.listarPorMes(mes, ano),
         categoriasApi.listarPorCasal(),
@@ -88,6 +92,9 @@ export const Historico = () => {
       setDespesas(data);
       setCategorias(cats);
       setCasal(casalData);
+      cache.set(cacheKeys.despesasMes(mes, ano), data);
+      cache.set(cacheKeys.categorias, cats);
+      cache.set(cacheKeys.casal(user.casalId), casalData);
       setPaginaAtual(1);
 
       try {
@@ -150,10 +157,7 @@ export const Historico = () => {
     carregarDados();
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  const handleLogout = () => fazerLogout(navigate);
 
   const getCategoriaIcone = (categoriaId: number) => {
     return categorias.find(c => c.id === categoriaId)?.icone || '📦';

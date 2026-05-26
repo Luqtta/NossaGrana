@@ -1,4 +1,5 @@
 import { api } from './axios';
+import { cache } from '../utils/cache';
 
 export interface PreferenciasDashboard {
   corDestaque?: string;
@@ -27,6 +28,7 @@ export const preferenciasApi = {
 
   atualizar: async (request: PreferenciasUpdateRequest): Promise<PreferenciasDashboard> => {
     const response = await api.put('/preferencias-dashboard', request);
+    cache.invalidate('preferencias');
     return response.data;
   },
 

@@ -9,6 +9,7 @@ import { compensacoesApi } from '../api/compensacoes.api';
 import type { Compensacao, CompensacaoRequest, MembroCasal, TipoCompensacao } from '../types/compensacao.types';
 import { TIPOS_COMPENSACAO } from '../types/compensacao.types';
 import { formatBRL } from '../utils/formatBRL';
+import { fazerLogout } from '../utils/logout';
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -61,10 +62,7 @@ export const Compensacoes = () => {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  const handleLogout = () => fazerLogout(navigate);
 
   useEffect(() => {
     carregarMembros();

@@ -5,13 +5,18 @@ import { Sidebar } from '../components/Sidebar';
 import { Modal } from '../components/Modal';
 import { FolderArchive, Upload, Trash2, FileText, Image as ImageIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { comprovantesApi, type Comprovante } from '../api/comprovantes.api';
+import { fazerLogout } from '../utils/logout';
+import { cache } from '../utils/cache';
+import { cacheKeys } from '../utils/cacheKeys';
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 export const Comprovantes = () => {
   const navigate = useNavigate();
-  const [comprovantes, setComprovantes] = useState<Comprovante[]>([]);
-  const [loading, setLoading] = useState(true);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const casalId: number = user.casalId;
+  const [comprovantes, setComprovantes] = useState<Comprovante[]>(() => cache.get<Comprovante[]>(cacheKeys.comprovantes(casalId)) || []);
+  const [loading, setLoading] = useState(() => !cache.has(cacheKeys.comprovantes(casalId)));
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewMime, setPreviewMime] = useState<string>('');
@@ -23,14 +28,16 @@ export const Comprovantes = () => {
   }, []);
 
   const carregar = async () => {
+    const temCache = cache.has(cacheKeys.comprovantes(casalId));
+    if (!temCache) setLoading(true);
     try {
-      setLoading(true);
       const data = await comprovantesApi.listar();
       setComprovantes(data);
+      cache.set(cacheKeys.comprovantes(casalId), data);
       const chaveAtual = `${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
-      setPastasAbertas(new Set([chaveAtual]));
+      setPastasAbertas(prev => prev.size === 0 ? new Set([chaveAtual]) : prev);
     } catch {
-      toast.error('Erro ao carregar comprovantes');
+      if (!temCache) toast.error('Erro ao carregar comprovantes');
     } finally {
       setLoading(false);
     }
@@ -113,10 +120,7 @@ export const Comprovantes = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  const handleLogout = () => fazerLogout(navigate);
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden">

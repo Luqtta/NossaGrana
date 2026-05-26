@@ -1,4 +1,5 @@
 import { api } from './axios';
+import { invalidarCasal } from '../utils/cacheKeys';
 
 export interface CasalData {
   id: number;
@@ -50,18 +51,22 @@ export const casalApi = {
 
   enviarConvite: async (email: string): Promise<void> => {
     await api.post('/convites', { email });
+    invalidarCasal();
   },
 
   removerParceiro: async (casalId: number): Promise<void> => {
     await api.delete(`/casal/${casalId}/remover-parceiro`);
+    invalidarCasal(casalId);
   },
 
   atualizarNomes: async (casalId: number, data: AtualizarNomesRequest): Promise<void> => {
     await api.put(`/casal/${casalId}/atualizar-nomes`, data);
+    invalidarCasal(casalId);
   },
 
   definirMeta: async (casalId: number, metaMensal: number): Promise<void> => {
     await api.put(`/casal/${casalId}/meta`, { metaMensal });
+    invalidarCasal(casalId);
   },
 
   buscarEstatisticas: async (casalId: number, mes: number, ano: number): Promise<EstatisticasData> => {

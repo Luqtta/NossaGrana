@@ -1,4 +1,5 @@
 import { api } from './axios';
+import { cache } from '../utils/cache';
 
 const getCasalId = (): number => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -30,6 +31,7 @@ export interface ComprovanteUploadRequest {
 export const comprovantesApi = {
   upload: async (request: ComprovanteUploadRequest): Promise<Comprovante> => {
     const response = await api.post('/comprovantes', request);
+    cache.invalidate('comprovantes:');
     return response.data;
   },
 
@@ -57,5 +59,6 @@ export const comprovantesApi = {
 
   deletar: async (id: number): Promise<void> => {
     await api.delete(`/comprovantes/${id}`);
+    cache.invalidate('comprovantes:');
   },
 };

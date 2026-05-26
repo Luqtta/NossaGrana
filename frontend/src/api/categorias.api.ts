@@ -1,5 +1,7 @@
 import { api } from './axios';
 import type { Categoria } from '../types/despesa.types';
+import { invalidarCategoria } from '../utils/cacheKeys';
+import { cache } from '../utils/cache';
 
 const getCasalId = (): number => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -30,6 +32,8 @@ export const categoriasApi = {
 
   definirOrcamento: async (categoriaId: number, orcamento: number): Promise<void> => {
     await api.put(`/categorias/${categoriaId}/orcamento`, { orcamento });
+    invalidarCategoria();
+    cache.invalidate('categorias:detalhadas');
   },
 
   buscarSaldo: async (categoriaId: number, mes: number, ano: number): Promise<SaldoCategoriaData> => {
@@ -41,14 +45,20 @@ export const categoriasApi = {
 
   criar: async (categoria: { nome: string; icone: string; cor: string; orcamento: number; casalId: number }): Promise<Categoria> => {
     const response = await api.post('/categorias', categoria);
+    invalidarCategoria();
+    cache.invalidate('categorias:detalhadas');
     return response.data;
   },
 
   editar: async (id: number, categoria: { nome: string; icone: string; cor: string }): Promise<void> => {
     await api.put(`/categorias/${id}`, categoria);
+    invalidarCategoria();
+    cache.invalidate('categorias:detalhadas');
   },
 
   desativar: async (id: number): Promise<void> => {
     await api.delete(`/categorias/${id}`);
+    invalidarCategoria();
+    cache.invalidate('categorias:detalhadas');
   },
 };

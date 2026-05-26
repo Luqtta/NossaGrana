@@ -12,6 +12,9 @@ import { casalApi } from '../api/casal.api';
 import { formatBRL } from '../utils/formatBRL';
 import { Sidebar } from '../components/Sidebar';
 import type { CasalData } from '../api/casal.api';
+import { fazerLogout } from '../utils/logout';
+import { cache } from '../utils/cache';
+import { cacheKeys } from '../utils/cacheKeys';
 
 interface DadosPizza {
   categoria: string;
@@ -34,27 +37,33 @@ interface DadosBarras {
 
 export const Relatorios = () => {
   const navigate = useNavigate();
-  const [casal, setCasal] = useState<CasalData | null>(null);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [ano, setAno] = useState(new Date().getFullYear());
   const [modoPeriodo, setModoPeriodo] = useState<'mes' | 'personalizado'>('mes');
   const [periodoInicio, setPeriodoInicio] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
   const [periodoFim, setPeriodoFim] = useState(new Date().toISOString().split('T')[0]);
-  const [dadosPizza, setDadosPizza] = useState<DadosPizza[]>([]);
-  const [dadosLinha, setDadosLinha] = useState<DadosLinha[]>([]);
-  const [dadosBarras, setDadosBarras] = useState<DadosBarras[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [modalPDF, setModalPDF] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const cacheKeyRelatorio = `relatorios:${modoPeriodo}:${mes}:${ano}:${periodoInicio}:${periodoFim}`;
+  type RelatorioBundle = { pizza: DadosPizza[]; linha: DadosLinha[]; barras: DadosBarras[] };
+
+  const initial = cache.get<RelatorioBundle>(cacheKeyRelatorio);
+  const [casal, setCasal] = useState<CasalData | null>(() => cache.get<CasalData>(cacheKeys.casal(user.casalId)) || null);
+  const [dadosPizza, setDadosPizza] = useState<DadosPizza[]>(initial?.pizza || []);
+  const [dadosLinha, setDadosLinha] = useState<DadosLinha[]>(initial?.linha || []);
+  const [dadosBarras, setDadosBarras] = useState<DadosBarras[]>(initial?.barras || []);
+  const [loading, setLoading] = useState(() => !cache.has(cacheKeyRelatorio));
+  const [modalPDF, setModalPDF] = useState(false);
 
   useEffect(() => {
     carregarDados();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mes, ano, modoPeriodo, periodoInicio, periodoFim]);
 
   const carregarDados = async () => {
+    const temCache = cache.has(cacheKeyRelatorio);
+    if (!temCache) setLoading(true);
     try {
-      setLoading(true);
       const pizzaPromise = modoPeriodo === 'personalizado'
         ? relatoriosApi.gastosPorCategoriaPeriodo(user.casalId, periodoInicio, periodoFim)
         : relatoriosApi.gastosPorCategoria(user.casalId, mes, ano);
@@ -98,17 +107,16 @@ export const Relatorios = () => {
       setDadosBarras(barrasData);
 
       setCasal(casalData);
+      cache.set(cacheKeys.casal(user.casalId), casalData);
+      cache.set(cacheKeyRelatorio, { pizza: pizzaData, linha: linhaData, barras: barrasData });
     } catch {
-      toast.error('Erro ao carregar relatórios');
+      if (!temCache) toast.error('Erro ao carregar relatórios');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  const handleLogout = () => fazerLogout(navigate);
 
   const meses = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',

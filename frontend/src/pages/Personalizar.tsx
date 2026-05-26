@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { Sidebar } from '../components/Sidebar';
 import { Palette, Image as ImageIcon, GripVertical, Eye, EyeOff, Save, RotateCcw } from 'lucide-react';
 import { preferenciasApi, CARDS_DISPONIVEIS, type CardId } from '../api/preferencias.api';
+import { fazerLogout } from '../utils/logout';
 
 const CORES_PADRAO = [
   '#10b981', '#3b82f6', '#8b5cf6', '#ec4899',
@@ -134,10 +135,7 @@ export const Personalizar = () => {
     });
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  const handleLogout = () => fazerLogout(navigate);
 
   if (loading) {
     return (
@@ -221,12 +219,28 @@ export const Personalizar = () => {
             </h3>
             {imagemPreview ? (
               <div className="space-y-3">
-                <div
-                  className="w-full h-48 rounded-xl bg-cover bg-center border border-gray-200 dark:border-gray-600"
-                  style={{ backgroundImage: `url(${imagemPreview})` }}
-                />
+                <div className="relative w-full h-48 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${imagemPreview})` }}
+                  />
+                  <div
+                    className="absolute inset-0 bg-black pointer-events-none transition-opacity"
+                    style={{ opacity: 1 - opacidade / 100 }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 pointer-events-none" />
+                  <div className="absolute bottom-3 left-4 right-4 flex items-end gap-3 text-white drop-shadow-lg">
+                    <div className="w-12 h-12 rounded-full border-[3px] border-white shadow-md flex items-center justify-center text-white font-bold" style={{ backgroundColor: cor }}>
+                      P
+                    </div>
+                    <div>
+                      <p className="font-bold leading-tight">Preview do banner</p>
+                      <p className="text-xs text-white/85">Finanças · opacidade {opacidade}%</p>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Opacidade: {opacidade}%</label>
+                  <label className="text-sm text-gray-600 dark:text-gray-400 w-32 shrink-0">Opacidade: {opacidade}%</label>
                   <input
                     type="range"
                     min="0"
