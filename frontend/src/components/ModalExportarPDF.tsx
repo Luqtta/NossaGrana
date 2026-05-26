@@ -10,6 +10,7 @@ import type { CasalData } from '../api/casal.api';
 import { formatBRL } from '../utils/formatBRL';
 import { calcularAcertoMensal } from '../utils/calcularAcertoMensal';
 import type { Despesa } from '../types/despesa.types';
+import { FileDown } from 'lucide-react';
 
 type TipoPeriodo = 'dia' | 'mes' | 'ano';
 
@@ -464,7 +465,7 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
         {/* Header */}
         <div className="bg-emerald-600 dark:bg-emerald-700 px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-white text-xl font-bold">📄 Exportar PDF</h2>
+            <h2 className="text-white text-xl font-bold inline-flex items-center gap-2"><FileDown size={20} /> Exportar PDF</h2>
             <button
               onClick={onClose}
               className="text-white/70 hover:text-white text-2xl leading-none transition"
@@ -488,7 +489,7 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
-                {t === 'dia' ? '📅 Dia' : t === 'mes' ? '📆 Mês' : '📊 Ano'}
+                {t === 'dia' ? 'Dia' : t === 'mes' ? 'Mês' : 'Ano'}
               </button>
             ))}
           </div>
@@ -609,11 +610,11 @@ export const ModalExportarPDF = ({ isOpen, onClose }: Props) => {
             >
               {gerando ? (
                 <>
-                  <span className="animate-spin">⏳</span>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Gerando...
                 </>
               ) : (
-                '📄 Gerar PDF'
+                <><FileDown size={16} /> Gerar PDF</>
               )}
             </button>
           </div>

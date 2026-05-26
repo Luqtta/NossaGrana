@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Settings, ArrowRightLeft } from 'lucide-react';
+import { Settings, ArrowRightLeft, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { LegendaPizza } from '../components/LegendaPizza';
 import { Sidebar } from '../components/Sidebar';
@@ -297,8 +297,9 @@ export const Dashboard = () => {
               className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-xl opacity-0"
               style={{ animation: 'fadeInUp 0.6s ease-out 0.05s forwards' }}
             >
-              <p className="font-semibold text-red-700 dark:text-red-400 mb-2">
-                ⚠️ {categoriasSobreOrcamento.length} {categoriasSobreOrcamento.length === 1 ? 'categoria ultrapassou' : 'categorias ultrapassaram'} o orçamento este mês:
+              <p className="font-semibold text-red-700 dark:text-red-400 mb-2 inline-flex items-center gap-2">
+                <AlertTriangle size={18} />
+                {categoriasSobreOrcamento.length} {categoriasSobreOrcamento.length === 1 ? 'categoria ultrapassou' : 'categorias ultrapassaram'} o orçamento este mês:
               </p>
               <div className="flex flex-wrap gap-2">
                 {categoriasSobreOrcamento.map(cat => {
@@ -540,7 +541,7 @@ export const Dashboard = () => {
                     if (positivos.length === 0 && negativos.length === 0) {
                       return (
                         <div className="mt-auto rounded-lg p-2.5 text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                          <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs">✓ Sem acerto pendente</p>
+                          <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs inline-flex items-center gap-1"><CheckCircle2 size={12} /> Sem acerto pendente</p>
                         </div>
                       );
                     }
@@ -553,7 +554,7 @@ export const Dashboard = () => {
                     if (valorTransacao < threshold) {
                       return (
                         <div className="mt-auto rounded-lg p-2.5 text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                          <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs">✓ Sem acerto pendente</p>
+                          <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs inline-flex items-center gap-1"><CheckCircle2 size={12} /> Sem acerto pendente</p>
                         </div>
                       );
                     }

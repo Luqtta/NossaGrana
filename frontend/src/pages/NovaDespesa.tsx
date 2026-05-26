@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RotateCw, Paperclip } from 'lucide-react';
 import { despesasApi } from '../api/despesas.api';
 import { formatBRL } from '../utils/formatBRL';
 import { categoriasApi, type SaldoCategoriaData } from '../api/categorias.api';
@@ -316,7 +316,7 @@ export const NovaDespesa = () => {
               >
                 <div className="p-3 rounded-xl border-2 border-blue-400 bg-blue-50 dark:bg-blue-900/20">
                   <div className="flex items-start gap-3">
-                    <span className="text-xl mt-0.5">🔁</span>
+                    <RotateCw size={20} className="text-blue-600 dark:text-blue-300 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Despesa recorrente</p>
                       <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
@@ -407,7 +407,7 @@ export const NovaDespesa = () => {
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2 py-4">
-                  <span className="text-4xl">📎</span>
+                  <Paperclip size={36} className="text-gray-400" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">Clique para anexar foto ou PDF do comprovante</span>
                   <span className="text-xs text-gray-400 dark:text-gray-500">JPG, PNG, PDF até 5MB</span>
                 </div>

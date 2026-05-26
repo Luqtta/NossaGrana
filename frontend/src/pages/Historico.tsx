@@ -12,6 +12,7 @@ import { Modal } from '../components/Modal';
 import { ModalEditarDespesa } from '../components/ModalEditarDespesa';
 import { ModalExportarPDF } from '../components/ModalExportarPDF';
 import { AnimatedNumber } from '../components/AnimatedNumber';
+import { FileDown, Filter, ChevronUp, ChevronDown, RotateCw, Calendar, User, CreditCard, CheckCircle2, Circle, Paperclip, Pencil, Trash2, Square } from 'lucide-react';
 import type { Despesa, Categoria } from '../types/despesa.types';
 import type { CasalData } from '../api/casal.api';
 import { fazerLogout } from '../utils/logout';
@@ -219,9 +220,9 @@ export const Historico = () => {
             </div>
             <button
               onClick={() => setModalPDFAberto(true)}
-              className="bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition font-medium text-sm"
+              className="bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition font-medium text-sm flex items-center gap-2"
             >
-              📄 Exportar PDF
+              <FileDown size={16} /> Exportar PDF
             </button>
           </div>
 
@@ -376,7 +377,7 @@ export const Historico = () => {
               onClick={() => setMostrarFiltros(!mostrarFiltros)}
               className="flex items-center gap-2 text-gray-700 dark:text-gray-300 font-medium"
             >
-              🔍 Filtros {mostrarFiltros ? '▲' : '▼'}
+              <Filter size={16} /> Filtros {mostrarFiltros ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
 
             {mostrarFiltros && (
@@ -513,13 +514,13 @@ export const Historico = () => {
                                   <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 px-2 py-0.5 rounded">Editada</span>
                                 )}
                                 {despesa.recorrente && despesa.recorrenciaAtiva && (
-                                  <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded flex items-center gap-1">
-                                    🔁 Recorrente
+                                  <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                                    <RotateCw size={11} /> Recorrente
                                   </span>
                                 )}
                                 {despesa.recorrente && !despesa.recorrenciaAtiva && (
-                                  <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded flex items-center gap-1">
-                                    ⏹ Cancelada
+                                  <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                                    <Square size={10} /> Cancelada
                                   </span>
                                 )}
                               </div>
@@ -530,8 +531,8 @@ export const Historico = () => {
                             </div>
                           </div>
                           <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
-                            <span>📅 {new Date(despesa.dataTransacao + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
-                            <span>👤 {getResponsavelNome(despesa.responsavel)}</span>
+                            <span className="inline-flex items-center gap-1"><Calendar size={12} /> {new Date(despesa.dataTransacao + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                            <span className="inline-flex items-center gap-1"><User size={12} /> {getResponsavelNome(despesa.responsavel)}</span>
                             <span className={`px-2 py-0.5 rounded ${
                               despesa.tipoDespesa === 'FIXA' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
                               despesa.tipoDespesa === 'IMPREVISTA' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
@@ -539,7 +540,7 @@ export const Historico = () => {
                             }`}>
                               {despesa.tipoDespesa}
                             </span>
-                            {despesa.metodoPagamento && <span>💳 {despesa.metodoPagamento}</span>}
+                            {despesa.metodoPagamento && <span className="inline-flex items-center gap-1"><CreditCard size={12} /> {despesa.metodoPagamento}</span>}
                             {despesa.tipoDespesa === 'FIXA' && (
                               <button
                                 onClick={async () => {
@@ -551,22 +552,23 @@ export const Historico = () => {
                                     toast.error('Erro ao atualizar status');
                                   }
                                 }}
-                                className={`px-2 py-0.5 rounded text-xs font-medium transition ${
+                                className={`px-2 py-0.5 rounded text-xs font-medium transition inline-flex items-center gap-1 ${
                                   despesa.pago
                                     ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
                                     : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50'
                                 }`}
                                 title="Clique para alternar"
                               >
-                                {despesa.pago ? '✓ Pago' : '○ Não pago'}
+                                {despesa.pago ? <CheckCircle2 size={12} /> : <Circle size={12} />}
+                                {despesa.pago ? 'Pago' : 'Não pago'}
                               </button>
                             )}
                             {despesa.urlComprovante && (
                               <button
                                 onClick={() => abrirComprovante(despesa.urlComprovante!)}
-                                className="text-emerald-600 dark:text-emerald-400 hover:underline"
+                                className="text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
                               >
-                                📎 Comprovante
+                                <Paperclip size={12} /> Comprovante
                               </button>
                             )}
                           </div>
@@ -580,22 +582,22 @@ export const Historico = () => {
                             {despesa.recorrente && despesa.recorrenciaAtiva && (
                               <button
                                 onClick={() => setDespesaCancelando(despesa)}
-                                className="text-xs text-orange-600 dark:text-orange-400 px-2 py-1 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition"
+                                className="text-xs text-orange-600 dark:text-orange-400 px-2 py-1 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition inline-flex items-center gap-1"
                               >
-                                ⏹ Cancelar recorrência
+                                <Square size={12} /> Cancelar recorrência
                               </button>
                             )}
                             <button
                               onClick={() => setDespesaEditando(despesa)}
-                              className="text-xs text-blue-600 dark:text-blue-400 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
+                              className="text-xs text-blue-600 dark:text-blue-400 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition inline-flex items-center gap-1"
                             >
-                              ✏️ Editar
+                              <Pencil size={12} /> Editar
                             </button>
                             <button
                               onClick={() => setDespesaDeletando(despesa)}
-                              className="text-xs text-red-600 dark:text-red-400 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                              className="text-xs text-red-600 dark:text-red-400 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition inline-flex items-center gap-1"
                             >
-                              🗑️ Deletar
+                              <Trash2 size={12} /> Deletar
                             </button>
                           </div>
                         </div>

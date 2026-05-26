@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, FileText, Paperclip } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { despesasApi } from '../api/despesas.api';
 import { categoriasApi } from '../api/categorias.api';
@@ -240,7 +240,7 @@ export const ModalEditarDespesa = ({ despesa, isOpen, onClose, onSuccess }: Moda
                     <img src={comprovantePreview} alt="Comprovante" className="max-h-32 mx-auto rounded-lg object-contain" />
                   ) : (
                     <div className="flex items-center justify-center gap-2 py-2">
-                      <span className="text-2xl">📄</span>
+                      <FileText size={22} className="text-gray-500 dark:text-gray-400" />
                       <span className="text-sm text-gray-600 dark:text-gray-400">PDF anexado</span>
                     </div>
                   )}
@@ -248,7 +248,7 @@ export const ModalEditarDespesa = ({ despesa, isOpen, onClose, onSuccess }: Moda
                 </div>
               ) : (
                 <div className="flex items-center gap-2 py-2">
-                  <span className="text-2xl">📎</span>
+                  <Paperclip size={22} className="text-gray-500 dark:text-gray-400" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">Clique para anexar comprovante</span>
                 </div>
               )}

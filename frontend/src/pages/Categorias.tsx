@@ -8,6 +8,7 @@ import { Modal } from '../components/Modal';
 import { Sidebar } from '../components/Sidebar';
 import { CurrencyInput } from '../components/CurrencyInput';
 import { EmojiPickerInput } from '../components/EmojiPickerInput';
+import { Pencil, Trash2, Wallet } from 'lucide-react';
 import type { Categoria } from '../types/despesa.types';
 import { fazerLogout } from '../utils/logout';
 import { cache } from '../utils/cache';
@@ -220,14 +221,14 @@ export const Categorias = () => {
                         className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-500 dark:text-gray-400"
                         title="Editar"
                       >
-                        ✏️
+                        <Pencil size={16} />
                       </button>
                       <button
                         onClick={() => setModalDesativar(cat)}
-                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition text-gray-500 dark:text-gray-400"
+                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition text-gray-500 dark:text-gray-400 hover:text-red-500"
                         title="Desativar"
                       >
-                        🗑️
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
@@ -271,9 +272,9 @@ export const Categorias = () => {
                       setNovoOrcamento(cat.saldo?.orcamentoMensal ?? cat.orcamentoMensal ?? 0);
                       setModalOrcamento(cat);
                     }}
-                    className="mt-4 w-full text-sm text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 rounded-lg py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition"
+                    className="mt-4 w-full text-sm text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 rounded-lg py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition inline-flex items-center justify-center gap-2"
                   >
-                    💰 Definir Orçamento
+                    <Wallet size={14} /> Definir Orçamento
                   </button>
                 </div>
               ))}

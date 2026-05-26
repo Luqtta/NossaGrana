@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../api/axios';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { KeyRound, MailCheck } from 'lucide-react';
 
 export const EsqueceuSenha = () => {
   const [email, setEmail] = useState('');
@@ -34,8 +35,8 @@ export const EsqueceuSenha = () => {
         {/* Formulário */}
         <div className="p-8 md:p-12">
           <div className="mb-8">
-            <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center mb-4 text-2xl">
-              🔐
+            <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center mb-4">
+              <KeyRound size={28} className="text-red-600 dark:text-red-400" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Esqueceu a senha?
@@ -83,8 +84,8 @@ export const EsqueceuSenha = () => {
         {/* Painel direito */}
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 dark:from-emerald-600 dark:to-emerald-800 p-8 md:p-12 flex flex-col justify-center text-white transition-colors">
           <div className="mb-6">
-            <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4 text-3xl">
-              📧
+            <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+              <MailCheck size={32} className="text-white" />
             </div>
             <h2 className="text-2xl font-bold mb-3">Recuperação segura</h2>
             <p className="text-emerald-100 leading-relaxed">
