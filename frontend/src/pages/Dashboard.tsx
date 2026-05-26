@@ -45,7 +45,7 @@ export const Dashboard = () => {
   const [metaInput, setMetaInput] = useState(0);
   const [salvandoMeta, setSalvandoMeta] = useState(false);
   const [corDestaque, setCorDestaque] = useState('#10b981');
-  const [imagemBannerUrl, setImagemBannerUrl] = useState<string | null>(null);
+  const [imagemBannerUrl, setImagemBannerUrl] = useState<string | null>(() => cache.get<string>(cacheKeys.imagemFundo) || null);
   const [opacidadeBanner, setOpacidadeBanner] = useState(50);
   const [ordemCards, setOrdemCards] = useState<CardId[]>(CARDS_DISPONIVEIS.map(c => c.id));
   const [cardsEscondidos, setCardsEscondidos] = useState<Set<CardId>>(new Set());
