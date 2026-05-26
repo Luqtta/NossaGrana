@@ -116,6 +116,7 @@ public class CasalService {
             Map<String, Object> m = new HashMap<>();
             m.put("id", u.getId());
             m.put("nome", u.getNome());
+            m.put("fotoPerfil", u.getFotoPerfil());
             m.put("ehParceiro1", true);
             membros.add(m);
         });
@@ -124,6 +125,7 @@ public class CasalService {
             Map<String, Object> m = new HashMap<>();
             m.put("id", u.getId());
             m.put("nome", u.getNome());
+            m.put("fotoPerfil", u.getFotoPerfil());
             m.put("ehParceiro1", false);
             membros.add(m);
         });

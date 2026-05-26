@@ -30,9 +30,21 @@ export interface EstatisticasData {
   nomeParceiro2: string;
 }
 
+export interface MembroCasal {
+  id: number;
+  nome: string;
+  fotoPerfil: string | null;
+  ehParceiro1: boolean;
+}
+
 export const casalApi = {
   buscar: async (casalId: number): Promise<CasalData> => {
     const response = await api.get(`/casal/${casalId}`);
+    return response.data;
+  },
+
+  buscarMembros: async (casalId: number): Promise<MembroCasal[]> => {
+    const response = await api.get(`/casal/${casalId}/membros`);
     return response.data;
   },
 

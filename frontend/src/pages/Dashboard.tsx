@@ -11,7 +11,7 @@ import { categoriasApi } from '../api/categorias.api';
 import { casalApi } from '../api/casal.api';
 import { compensacoesApi } from '../api/compensacoes.api';
 import { preferenciasApi, CARDS_DISPONIVEIS, type CardId } from '../api/preferencias.api';
-import type { EstatisticasData, CasalData } from '../api/casal.api';
+import type { EstatisticasData, CasalData, MembroCasal } from '../api/casal.api';
 import type { Despesa, Categoria } from '../types/despesa.types';
 import type { AcertoMensalResponse } from '../types/compensacao.types';
 import { formatBRL } from '../utils/formatBRL';
@@ -29,6 +29,7 @@ export const Dashboard = () => {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [estatisticas, setEstatisticas] = useState<EstatisticasData | null>(null);
   const [casal, setCasal] = useState<CasalData | null>(null);
+  const [membros, setMembros] = useState<MembroCasal[]>([]);
   const [acerto, setAcerto] = useState<AcertoMensalResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMeta, setEditMeta] = useState(false);
@@ -94,12 +95,13 @@ export const Dashboard = () => {
       const mes = new Date().getMonth() + 1;
       const ano = new Date().getFullYear();
 
-      const [despesasData, categoriasData, statsData, casalData, acertoData] = await Promise.all([
+      const [despesasData, categoriasData, statsData, casalData, acertoData, membrosData] = await Promise.all([
         despesasApi.listarPorMes(mes, ano),
         categoriasApi.listarPorCasal(),
         casalApi.buscarEstatisticas(user.casalId, mes, ano),
         casalApi.buscar(user.casalId),
         compensacoesApi.calcularAcerto(mes, ano),
+        casalApi.buscarMembros(user.casalId),
       ]);
 
       setDespesas(despesasData);
@@ -107,6 +109,7 @@ export const Dashboard = () => {
       setEstatisticas(statsData);
       setCasal(casalData);
       setAcerto(acertoData);
+      setMembros(membrosData);
     } catch (error) {
       toast.error('Erro ao carregar dados');
     } finally {
@@ -193,53 +196,31 @@ export const Dashboard = () => {
 
   const totalGeral = estatisticas?.totalGeral || 0;
 
-  const renderParceiroCard = (
+  const parceiro1 = membros.find(m => m.ehParceiro1);
+  const parceiro2 = membros.find(m => !m.ehParceiro1);
+
+  const renderParceiroInfo = (
+    foto: string | null | undefined,
     nome: string,
     valorGasto: number,
-    barColor: string,
-    delay: string,
+    subtitulo: string,
   ) => (
-    <div
-      className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 hover:-translate-y-1 transition-all duration-300 opacity-0"
-      style={{ animation: `fadeInUp 0.6s ease-out ${delay} forwards` }}
-    >
+    <div className="flex items-center gap-3 min-w-0 flex-1">
       <div
-        className="h-24 bg-cover bg-center relative"
-        style={
-          imagemBannerUrl
-            ? { backgroundImage: `url(${imagemBannerUrl})` }
-            : { background: `linear-gradient(135deg, ${barColor}, var(--cor-destaque, #10b981))` }
-        }
+        className="w-16 h-16 rounded-full shrink-0 shadow-md flex items-center justify-center text-white font-bold text-xl overflow-hidden border-[3px] border-white dark:border-gray-800"
+        style={{ backgroundColor: 'var(--cor-destaque, #10b981)' }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        {foto ? (
+          <img src={foto} alt={nome} className="w-full h-full object-cover" />
+        ) : (
+          iniciaisDoNome(nome)
+        )}
       </div>
-      <div className="px-6 pb-5 -mt-8 relative">
-        <div className="flex items-end gap-3">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl border-4 border-white dark:border-gray-800 shadow-md"
-            style={{ backgroundColor: barColor }}
-          >
-            {iniciaisDoNome(nome)}
-          </div>
-          <div className="pb-1.5 min-w-0 flex-1">
-            <h3 className="font-bold text-gray-900 dark:text-white truncate">{nome}</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Finanças do mês</p>
-          </div>
-        </div>
-        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-end justify-between gap-2">
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Gastou este mês</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              R$ {formatBRL(valorGasto)}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-400">
-              {totalGeral > 0 ? `${((valorGasto / totalGeral) * 100).toFixed(0)}%` : '0%'}
-            </p>
-            <p className="text-[10px] text-gray-400">do total</p>
-          </div>
-        </div>
+      <div className="min-w-0 text-white drop-shadow">
+        <h3 className="font-bold truncate text-lg leading-tight">{nome}</h3>
+        <p className="text-xs text-white/85 truncate">
+          {subtitulo} · R$ {formatBRL(valorGasto)}
+        </p>
       </div>
     </div>
   );
@@ -303,20 +284,31 @@ export const Dashboard = () => {
             </div>
           )}
 
-          {/* Linha 1: Cards dos Parceiros */}
-          <div className={`grid gap-6 mb-6 ${isSolo ? 'grid-cols-1 md:max-w-md' : 'grid-cols-1 md:grid-cols-2'}`}>
-            {renderParceiroCard(
-              estatisticas?.nomeParceiro1 || casal?.nomeParceiro1 || 'Parceiro 1',
-              estatisticas?.totalParceiro1 || 0,
-              '#0ea5e9',
-              '0.1s',
-            )}
-            {!isSolo && renderParceiroCard(
-              estatisticas?.nomeParceiro2 || casal?.nomeParceiro2 || 'Parceiro 2',
-              estatisticas?.totalParceiro2 || 0,
-              '#8b5cf6',
-              '0.2s',
-            )}
+          {/* Banner com parceiros */}
+          <div
+            className="rounded-2xl overflow-hidden shadow-lg mb-6 opacity-0 relative bg-cover bg-center min-h-[160px]"
+            style={{
+              animation: 'fadeInUp 0.6s ease-out 0.1s forwards',
+              ...(imagemBannerUrl
+                ? { backgroundImage: `url(${imagemBannerUrl})` }
+                : { background: `linear-gradient(135deg, var(--cor-destaque, #10b981), #1e293b)` }),
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/45 to-black/65" />
+            <div className={`relative grid gap-6 p-6 ${isSolo ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
+              {renderParceiroInfo(
+                parceiro1?.fotoPerfil,
+                estatisticas?.nomeParceiro1 || parceiro1?.nome || 'Parceiro 1',
+                estatisticas?.totalParceiro1 || 0,
+                'Finanças',
+              )}
+              {!isSolo && renderParceiroInfo(
+                parceiro2?.fotoPerfil,
+                estatisticas?.nomeParceiro2 || parceiro2?.nome || 'Parceiro 2',
+                estatisticas?.totalParceiro2 || 0,
+                'Finanças',
+              )}
+            </div>
           </div>
 
           {/* Linha 2: 2x2 de cards principais + Acerto do Mês */}
@@ -437,101 +429,140 @@ export const Dashboard = () => {
             <div className="xl:col-span-5">
               {cardVisivel('acertoMes') && !isSolo && acerto && !acerto.solo ? (
                 <div
-                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5 opacity-0 h-full"
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-5 opacity-0 h-full flex flex-col"
                   style={{ animation: 'fadeInUp 0.6s ease-out 0.5s forwards' }}
                 >
-                  <div className="flex items-center gap-2 mb-4">
-                    <ArrowRightLeft size={16} style={{ color: 'var(--cor-destaque, #10b981)' }} />
-                    <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                      Acerto do Mês
-                    </h3>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <ArrowRightLeft size={16} style={{ color: 'var(--cor-destaque, #10b981)' }} />
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">Acerto do Mês</h3>
+                    </div>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 italic">mês + compensações</span>
                   </div>
 
-                  <div className="rounded-xl bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-700 p-3 mb-4">
-                    <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-lg bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-700 p-2.5 mb-3">
+                    <div className="grid grid-cols-3 gap-2 text-[11px]">
                       <div>
-                        <p className="text-gray-500 dark:text-gray-400">Total do mês</p>
-                        <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                          R$ {formatBRL(Number(acerto.totalDespesasMes || 0))}
-                        </p>
+                        <p className="text-gray-500 dark:text-gray-400 leading-tight">Total mês</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">R$ {formatBRL(Number(acerto.totalDespesasMes || 0))}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500 dark:text-gray-400">Cota por pessoa</p>
-                        <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                          R$ {formatBRL(Number(acerto.cotaIdeal || 0))}
-                        </p>
+                        <p className="text-gray-500 dark:text-gray-400 leading-tight">Cota base</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">R$ {formatBRL(Number(acerto.cotaIdeal || 0))}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400 leading-tight">Pessoas</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{[acerto.parceiro1, acerto.parceiro2].filter(Boolean).length}</p>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                    {[acerto.parceiro1, acerto.parceiro2].filter(Boolean).map((p) => {
+                      if (!p) return null;
+                      const valorPago = Number(p.despesasPagas || 0);
+                      const cotaBase = Number(acerto.cotaIdeal || 0);
+                      const valorLiquidoDevido = valorPago - cotaBase;
+                      const compensacoes = Number(p.compensacoesConcedidas || 0) - Number(p.compensacoesRecebidas || 0);
+                      const valorTotalDevido = valorLiquidoDevido + compensacoes;
+                      const recebe = valorTotalDevido > 0;
+                      const deve = valorTotalDevido < 0;
+                      const cardClasses = recebe
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                        : deve
+                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                          : 'bg-gray-50 dark:bg-gray-700/30 border-gray-200 dark:border-gray-700';
+                      const titleClasses = recebe
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : deve
+                          ? 'text-red-700 dark:text-red-300'
+                          : 'text-gray-700 dark:text-gray-300';
+                      const colorByValue = (v: number) =>
+                        v > 0 ? 'text-emerald-700 dark:text-emerald-300'
+                        : v < 0 ? 'text-red-700 dark:text-red-300'
+                        : 'text-gray-700 dark:text-gray-300';
+                      const signedCurrency = (v: number) =>
+                        `${v > 0 ? '+ ' : v < 0 ? '- ' : ''}R$ ${formatBRL(Math.abs(v))}`;
+
+                      return (
+                        <div key={p.usuarioId} className={`rounded-lg p-2.5 border ${cardClasses}`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className={`text-xs font-semibold truncate ${titleClasses}`}>{p.nome}</p>
+                            <span className={`text-[10px] font-semibold shrink-0 ml-1 ${titleClasses}`}>
+                              {recebe ? 'A receber' : deve ? 'A pagar' : 'Em dia'}
+                            </span>
+                          </div>
+                          <div className="space-y-1 text-[10px] text-gray-600 dark:text-gray-400">
+                            <div className="flex justify-between gap-2">
+                              <span>Valor pago</span>
+                              <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(valorPago)}</span>
+                            </div>
+                            <div className="flex justify-between gap-2">
+                              <span>Cota (50/50)</span>
+                              <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatBRL(cotaBase)}</span>
+                            </div>
+                            <div className="flex justify-between gap-2 border-t border-gray-200 dark:border-gray-700 pt-1">
+                              <span>Líquido</span>
+                              <span className={`font-semibold ${colorByValue(valorLiquidoDevido)}`}>{signedCurrency(valorLiquidoDevido)}</span>
+                            </div>
+                            <div className="flex justify-between gap-2">
+                              <span>Compensações</span>
+                              <span className={`font-semibold ${colorByValue(compensacoes)}`}>{signedCurrency(compensacoes)}</span>
+                            </div>
+                            <div className="flex justify-between gap-2 border-t border-gray-200 dark:border-gray-700 pt-1">
+                              <span className="font-medium">Total</span>
+                              <span className={`font-bold ${colorByValue(valorTotalDevido)}`}>{signedCurrency(valorTotalDevido)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {(() => {
                     const p1 = acerto.parceiro1;
                     const p2 = acerto.parceiro2;
                     if (!p1 || !p2) return null;
-
                     const cotaBase = Number(acerto.cotaIdeal || 0);
-                    const valorTotalDevidoP1 = (Number(p1.despesasPagas || 0) - cotaBase)
-                      + (Number(p1.compensacoesConcedidas || 0) - Number(p1.compensacoesRecebidas || 0));
-                    const valorTotalDevidoP2 = (Number(p2.despesasPagas || 0) - cotaBase)
-                      + (Number(p2.compensacoesConcedidas || 0) - Number(p2.compensacoesRecebidas || 0));
+                    const v1 = (Number(p1.despesasPagas || 0) - cotaBase) + (Number(p1.compensacoesConcedidas || 0) - Number(p1.compensacoesRecebidas || 0));
+                    const v2 = (Number(p2.despesasPagas || 0) - cotaBase) + (Number(p2.compensacoesConcedidas || 0) - Number(p2.compensacoesRecebidas || 0));
                     const threshold = 0.01;
-                    const parceiros = [
-                      { nome: p1.nome, valor: valorTotalDevidoP1 },
-                      { nome: p2.nome, valor: valorTotalDevidoP2 },
-                    ];
-                    const positivos = parceiros.filter((p) => p.valor > threshold).sort((a, b) => b.valor - a.valor);
-                    const negativos = parceiros.filter((p) => p.valor < -threshold).sort((a, b) => a.valor - b.valor);
-
+                    const arr = [{ nome: p1.nome, valor: v1 }, { nome: p2.nome, valor: v2 }];
+                    const positivos = arr.filter(x => x.valor > threshold).sort((a, b) => b.valor - a.valor);
+                    const negativos = arr.filter(x => x.valor < -threshold).sort((a, b) => a.valor - b.valor);
                     if (positivos.length === 0 && negativos.length === 0) {
                       return (
-                        <div className="rounded-xl p-4 text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                          <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
-                            ✓ Sem acerto pendente
-                          </p>
+                        <div className="mt-auto rounded-lg p-2.5 text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                          <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs">✓ Sem acerto pendente</p>
                         </div>
                       );
                     }
-
-                    const credor = positivos[0] ?? parceiros[0];
-                    const devedor = negativos[0] ?? parceiros[1];
-                    const valorReferencia = positivos[0] ?? negativos[0];
+                    const credor = positivos[0] ?? arr[0];
+                    const devedor = negativos[0] ?? arr[1];
+                    const valorRef = positivos[0] ?? negativos[0];
                     const valorTransacao = positivos.length > 0 && negativos.length > 0
                       ? Math.min(Math.abs(credor.valor), Math.abs(devedor.valor))
-                      : Math.abs(valorReferencia?.valor || 0);
-
+                      : Math.abs(valorRef?.valor || 0);
                     if (valorTransacao < threshold) {
                       return (
-                        <div className="rounded-xl p-4 text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                          <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
-                            ✓ Sem acerto pendente
-                          </p>
+                        <div className="mt-auto rounded-lg p-2.5 text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                          <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs">✓ Sem acerto pendente</p>
                         </div>
                       );
                     }
-
                     return (
-                      <div className="rounded-xl p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">Resultado final</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white text-center leading-relaxed">
+                      <div className="mt-auto rounded-lg p-2.5 text-center bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-0.5">Resultado final</p>
+                        <p className="text-xs font-bold text-gray-900 dark:text-white">
                           <span className="text-red-600 dark:text-red-400">{devedor.nome}</span>
                           {' deve '}
-                          <br />
-                          <span className="text-lg" style={{ color: 'var(--cor-destaque, #10b981)' }}>
-                            R$ {formatBRL(valorTransacao)}
-                          </span>
+                          <span className="text-sm" style={{ color: 'var(--cor-destaque, #10b981)' }}>R$ {formatBRL(valorTransacao)}</span>
                           {' para '}
                           <span style={{ color: 'var(--cor-destaque, #10b981)' }}>{credor.nome}</span>
                         </p>
                       </div>
                     );
                   })()}
-
-                  <button
-                    onClick={() => navigate('/compensacoes')}
-                    className="mt-4 w-full text-xs text-center text-gray-500 dark:text-gray-400 hover:underline"
-                  >
-                    Ver detalhamento completo →
-                  </button>
                 </div>
               ) : (
                 <div
