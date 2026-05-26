@@ -707,7 +707,7 @@ export const Dashboard = () => {
                         if (dateDiff !== 0) return dateDiff;
                         return b.id - a.id;
                       })
-                      .slice(0, 5)
+                      .slice(0, 7)
                       .map((despesa) => {
                         const categoria = categorias.find(c => c.id === despesa.categoriaId);
                         return (
