@@ -233,30 +233,46 @@ export const Dashboard = () => {
       <Sidebar onLogout={handleLogout} />
 
       <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Header */}
-          <div
-            className="mb-6 opacity-0 flex items-start justify-between gap-4 flex-wrap"
-            style={{ animation: 'fadeInUp 0.6s ease-out forwards' }}
-          >
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Olá, {user.nome}! Bem-vindo de volta.
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Aqui está o resumo das suas finanças
-              </p>
+        {/* Banner full-width com parceiros + botão Nova Despesa */}
+        <div
+          className="relative bg-cover bg-center min-h-[180px] shadow-lg opacity-0"
+          style={{
+            animation: 'fadeInUp 0.6s ease-out forwards',
+            ...(imagemBannerUrl
+              ? { backgroundImage: `url(${imagemBannerUrl})` }
+              : { background: `linear-gradient(135deg, var(--cor-destaque, #10b981), #1e293b)` }),
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/40 to-black/65" />
+          <div className="relative max-w-7xl mx-auto px-4 py-6">
+            <div className="flex items-start justify-end mb-3">
+              <button
+                onClick={() => navigate('/nova-despesa')}
+                className="text-white px-4 py-2 rounded-xl font-semibold hover:brightness-110 transition shadow-lg flex items-center gap-2 backdrop-blur-sm"
+                style={{ backgroundColor: 'var(--cor-destaque, #10b981)' }}
+              >
+                <span className="text-lg">+</span>
+                Nova Despesa
+              </button>
             </div>
-            <button
-              onClick={() => navigate('/nova-despesa')}
-              className="text-white px-5 py-2.5 rounded-xl font-semibold hover:brightness-110 transition shadow-md flex items-center gap-2"
-              style={{ backgroundColor: 'var(--cor-destaque, #10b981)' }}
-            >
-              <span className="text-xl">+</span>
-              Nova Despesa
-            </button>
+            <div className={`grid gap-6 ${isSolo ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
+              {renderParceiroInfo(
+                parceiro1?.fotoPerfil,
+                estatisticas?.nomeParceiro1 || parceiro1?.nome || 'Parceiro 1',
+                estatisticas?.totalParceiro1 || 0,
+                'Finanças',
+              )}
+              {!isSolo && renderParceiroInfo(
+                parceiro2?.fotoPerfil,
+                estatisticas?.nomeParceiro2 || parceiro2?.nome || 'Parceiro 2',
+                estatisticas?.totalParceiro2 || 0,
+                'Finanças',
+              )}
+            </div>
           </div>
+        </div>
 
+        <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Alertas de Orçamento */}
           {categoriasSobreOrcamento.length > 0 && (
             <div
@@ -283,33 +299,6 @@ export const Dashboard = () => {
               </div>
             </div>
           )}
-
-          {/* Banner com parceiros */}
-          <div
-            className="rounded-2xl overflow-hidden shadow-lg mb-6 opacity-0 relative bg-cover bg-center min-h-[160px]"
-            style={{
-              animation: 'fadeInUp 0.6s ease-out 0.1s forwards',
-              ...(imagemBannerUrl
-                ? { backgroundImage: `url(${imagemBannerUrl})` }
-                : { background: `linear-gradient(135deg, var(--cor-destaque, #10b981), #1e293b)` }),
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/45 to-black/65" />
-            <div className={`relative grid gap-6 p-6 ${isSolo ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
-              {renderParceiroInfo(
-                parceiro1?.fotoPerfil,
-                estatisticas?.nomeParceiro1 || parceiro1?.nome || 'Parceiro 1',
-                estatisticas?.totalParceiro1 || 0,
-                'Finanças',
-              )}
-              {!isSolo && renderParceiroInfo(
-                parceiro2?.fotoPerfil,
-                estatisticas?.nomeParceiro2 || parceiro2?.nome || 'Parceiro 2',
-                estatisticas?.totalParceiro2 || 0,
-                'Finanças',
-              )}
-            </div>
-          </div>
 
           {/* Linha 2: 2x2 de cards principais + Acerto do Mês */}
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-6">
