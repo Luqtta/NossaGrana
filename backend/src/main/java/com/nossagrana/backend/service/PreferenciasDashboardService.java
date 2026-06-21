@@ -30,7 +30,9 @@ public class PreferenciasDashboardService {
                     .build();
                 return repository.save(nova);
             });
-        return mapToResponse(pref);
+        // Checa flag por query separada pra nao disparar o load LAZY do byte[].
+        boolean temImagem = repository.existeImagemFundo(usuarioId);
+        return mapToResponse(pref, temImagem);
     }
 
     @Transactional
@@ -63,11 +65,25 @@ public class PreferenciasDashboardService {
             pref.setImagemFundoMime(request.getImagemFundoMime() != null ? request.getImagemFundoMime() : "image/jpeg");
         }
 
-        return mapToResponse(repository.save(pref));
+        PreferenciasDashboard salvo = repository.save(pref);
+        // Apos save, o byte[] em memoria pode ter sido setado/nulled diretamente
+        // — usamos a referencia em memoria pra montar a flag sem nova query.
+        boolean temImagem = salvo.getImagemFundo() != null && salvo.getImagemFundo().length > 0;
+        return mapToResponse(salvo, temImagem);
     }
 
+    @Transactional(readOnly = true)
     public PreferenciasDashboard buscarEntidade(Long usuarioId) {
-        return repository.findByUsuarioId(usuarioId).orElse(null);
+        PreferenciasDashboard pref = repository.findByUsuarioId(usuarioId).orElse(null);
+        // Forca o load do byte[] LAZY enquanto a transacao esta aberta
+        // (o controller le getImagemFundo() depois). Sem isso, dependeria de OSIV.
+        if (pref != null) {
+            byte[] dados = pref.getImagemFundo();
+            if (dados != null) {
+                dados.getClass(); // touch — garante load
+            }
+        }
+        return pref;
     }
 
     private byte[] decodificarBase64(String s) {
@@ -83,10 +99,10 @@ public class PreferenciasDashboardService {
         }
     }
 
-    private PreferenciasDashboardResponse mapToResponse(PreferenciasDashboard p) {
+    private PreferenciasDashboardResponse mapToResponse(PreferenciasDashboard p, boolean temImagemFundo) {
         return PreferenciasDashboardResponse.builder()
             .corDestaque(p.getCorDestaque())
-            .temImagemFundo(p.getImagemFundo() != null && p.getImagemFundo().length > 0)
+            .temImagemFundo(temImagemFundo)
             .imagemFundoMime(p.getImagemFundoMime())
             .opacidadeFundo(p.getOpacidadeFundo())
             .ordemCards(p.getOrdemCards())

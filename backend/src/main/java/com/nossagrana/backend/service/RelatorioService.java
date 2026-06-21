@@ -28,13 +28,19 @@ public class RelatorioService {
 
     public Map<String, Object> evolucaoMensal(Long casalId, int ano) {
         List<String> meses = Arrays.asList("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez");
-        List<Double> valores = new ArrayList<>();
 
+        // 1 query agregada com GROUP BY no DB — substitui 12 queries que carregavam
+        // entidades inteiras (incluindo urlComprovante em base64) so pra somar valor.
+        Map<Integer, Double> somasPorMes = new HashMap<>();
+        for (Object[] linha : despesaRepository.totaisPorMesNoAno(casalId, ano)) {
+            Integer mes = ((Number) linha[0]).intValue();
+            Double soma = linha[1] != null ? ((Number) linha[1]).doubleValue() : 0.0;
+            somasPorMes.put(mes, soma);
+        }
+
+        List<Double> valores = new ArrayList<>(12);
         for (int mes = 1; mes <= 12; mes++) {
-            LocalDate inicio = LocalDate.of(ano, mes, 1);
-            LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
-            List<Despesa> despesas = despesaRepository.findByCasalIdAndDataTransacaoBetween(casalId, inicio, fim);
-            valores.add(despesas.stream().mapToDouble(d -> d.getValor().doubleValue()).sum());
+            valores.add(somasPorMes.getOrDefault(mes, 0.0));
         }
 
         Map<String, Object> resultado = new HashMap<>();

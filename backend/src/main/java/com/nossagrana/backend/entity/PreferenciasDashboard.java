@@ -25,6 +25,9 @@ public class PreferenciasDashboard {
     @Column(name = "imagem_fundo_mime", length = 100)
     private String imagemFundoMime;
 
+    // LAZY: nao carrega a imagem (ate 5MB) so pra checar se existe ou ler outras
+    // preferencias. So o endpoint /imagem-fundo precisa do byte[] e forca o load.
+    @Basic(fetch = FetchType.LAZY)
     @Column(name = "imagem_fundo", columnDefinition = "bytea")
     private byte[] imagemFundo;
 

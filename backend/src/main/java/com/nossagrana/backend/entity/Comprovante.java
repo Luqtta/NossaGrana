@@ -25,6 +25,10 @@ public class Comprovante {
     @Column(name = "mime_type", nullable = false, length = 100)
     private String mimeType;
 
+    // Carregamento LAZY: evita pular byte[] de cada comprovante pra JVM heap
+    // em listagens. Acessar getDados() so funciona dentro de transacao aberta
+    // (caso de uso: download). Listagens nao tocam neste campo.
+    @Basic(fetch = FetchType.LAZY)
     @Column(nullable = false, columnDefinition = "bytea")
     private byte[] dados;
 

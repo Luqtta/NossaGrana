@@ -90,10 +90,9 @@ public class ComprovanteService {
     }
 
     public List<ComprovanteResponse> listarPorCasal(Long casalId) {
-        return comprovanteRepository.findByCasalIdOrderByAnoDescMesDescDataCriacaoDesc(casalId)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        // Projecao direta no SQL: nao traz o byte[] dados pra heap e tambem
+        // resolve o N+1 da descricao da despesa via subquery dentro da mesma query.
+        return comprovanteRepository.listarMetadataPorCasal(casalId);
     }
 
     public List<ComprovanteResponse> listarPorMes(Long casalId, int mes, int ano) {
@@ -103,6 +102,7 @@ public class ComprovanteService {
             .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public Comprovante baixar(Long id, Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
@@ -114,6 +114,9 @@ public class ComprovanteService {
             throw new ForbiddenException("Sem permissao para acessar este comprovante");
         }
 
+        // Forca o carregamento do byte[] LAZY enquanto ainda estamos na transacao.
+        // Sem isso, o controller acessando getDados() depende de OSIV estar ligado.
+        comprovante.getDados();
         return comprovante;
     }
 

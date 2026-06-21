@@ -90,4 +90,16 @@ public interface DespesaRepository extends JpaRepository<Despesa, Long> {
         @Param("mes") int mes,
         @Param("ano") int ano
     );
+
+    /**
+     * Soma de despesas agrupada por mes do ano. Retorna Object[] com:
+     *   [0] = mes (Integer 1-12)
+     *   [1] = soma (BigDecimal)
+     * Uma unica query agregada em vez de 12 queries sequenciais.
+     */
+    @Query("SELECT MONTH(d.dataTransacao), COALESCE(SUM(d.valor), 0) " +
+           "FROM Despesa d " +
+           "WHERE d.casal.id = :casalId AND YEAR(d.dataTransacao) = :ano " +
+           "GROUP BY MONTH(d.dataTransacao)")
+    List<Object[]> totaisPorMesNoAno(@Param("casalId") Long casalId, @Param("ano") int ano);
 }
