@@ -32,6 +32,7 @@ export const Configuracoes = () => {
   const [enviandoCodigoEmail, setEnviandoCodigoEmail] = useState(false);
   const [confirmandoEmail, setConfirmandoEmail] = useState(false);
 
+  const [senhaAtual, setSenhaAtual] = useState('');
   const [codigoSenha, setCodigoSenha] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
@@ -210,12 +211,20 @@ export const Configuracoes = () => {
   };
 
   const handleConfirmarSenha = async () => {
+    if (!senhaAtual) {
+      toast.error('Informe sua senha atual');
+      return;
+    }
     if (!codigoSenha) {
       toast.error('Informe o codigo');
       return;
     }
-    if (!novaSenha || novaSenha.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres');
+    if (!novaSenha || novaSenha.length < 8) {
+      toast.error('A senha deve ter pelo menos 8 caracteres');
+      return;
+    }
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/.test(novaSenha)) {
+      toast.error('A senha deve conter ao menos uma letra maiuscula, uma minuscula e um numero');
       return;
     }
     if (novaSenha !== confirmarSenha) {
@@ -225,8 +234,9 @@ export const Configuracoes = () => {
 
     setConfirmandoSenha(true);
     try {
-      await usuarioApi.confirmarTrocaSenha(codigoSenha, novaSenha);
+      await usuarioApi.confirmarTrocaSenha(senhaAtual, codigoSenha, novaSenha);
       toast.success('Senha atualizada');
+      setSenhaAtual('');
       setCodigoSenha('');
       setNovaSenha('');
       setConfirmarSenha('');
@@ -416,6 +426,14 @@ export const Configuracoes = () => {
                 {codigoSenhaEnviado && (
                   <div className="space-y-2">
                     <input
+                      type="password"
+                      value={senhaAtual}
+                      onChange={(e) => setSenhaAtual(e.target.value)}
+                      className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none"
+                      placeholder="Senha atual"
+                      autoComplete="current-password"
+                    />
+                    <input
                       type="text"
                       value={codigoSenha}
                       onChange={(e) => setCodigoSenha(e.target.value)}
@@ -427,7 +445,8 @@ export const Configuracoes = () => {
                       value={novaSenha}
                       onChange={(e) => setNovaSenha(e.target.value)}
                       className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none"
-                      placeholder="Nova senha"
+                      placeholder="Nova senha (8+ chars, 1 maiúscula, 1 minúscula, 1 número)"
+                      autoComplete="new-password"
                     />
                     <input
                       type="password"
@@ -435,6 +454,7 @@ export const Configuracoes = () => {
                       onChange={(e) => setConfirmarSenha(e.target.value)}
                       className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none"
                       placeholder="Confirmar nova senha"
+                      autoComplete="new-password"
                     />
                     <button
                       type="button"

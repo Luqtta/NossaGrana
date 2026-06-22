@@ -69,8 +69,8 @@ public class DespesaController {
 
     @GetMapping("/{id}/historico")
     public ResponseEntity<List<HistoricoEdicao>> buscarHistorico(@PathVariable Long id) {
-        autenticacaoHelper.getUsuarioAtual(); // garante autenticação
-        return ResponseEntity.ok(despesaService.buscarHistorico(id));
+        Usuario usuario = autenticacaoHelper.getUsuarioAtual();
+        return ResponseEntity.ok(despesaService.buscarHistorico(id, usuario.getId()));
     }
 
     @GetMapping("/filtrar")

@@ -6,8 +6,10 @@ import com.nossagrana.backend.entity.Casal;
 import com.nossagrana.backend.entity.Usuario;
 import com.nossagrana.backend.exception.BusinessException;
 import com.nossagrana.backend.repository.CasalRepository;
+import com.nossagrana.backend.exception.ForbiddenException;
 import com.nossagrana.backend.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final CasalRepository casalRepository;
     private final VerificacaoService verificacaoService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public UsuarioResponse atualizarNome(Usuario usuario, String nome) {
@@ -130,7 +133,12 @@ public class UsuarioService {
     }
 
     @Transactional
-    public void confirmarTrocaSenha(Usuario usuario, String codigo, String novaSenha) {
+    public void confirmarTrocaSenha(Usuario usuario, String senhaAtual, String codigo, String novaSenha) {
+        // Defesa contra account takeover via sessao sequestrada: exige conhecimento
+        // da senha atual antes de aceitar a troca, mesmo com codigo do email valido.
+        if (senhaAtual == null || !passwordEncoder.matches(senhaAtual, usuario.getSenha())) {
+            throw new ForbiddenException("Senha atual incorreta");
+        }
         verificacaoService.confirmarTrocaSenha(usuario, codigo, novaSenha);
     }
 

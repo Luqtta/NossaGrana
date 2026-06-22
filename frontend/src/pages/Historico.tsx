@@ -170,16 +170,30 @@ export const Historico = () => {
     return 'Compartilhada';
   };
 
+  const MIMES_COMPROVANTE_PERMITIDOS = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'application/pdf',
+  ]);
+
   const abrirComprovante = (urlComprovante: string) => {
     try {
       const [meta, base64] = urlComprovante.split(',');
-      const mimeType = meta.match(/:(.*?);/)?.[1] || 'application/octet-stream';
+      const mimeBruto = (meta.match(/:(.*?);/)?.[1] || '').toLowerCase().trim();
+      // Whitelist: rejeita SVG/HTML/scripts que poderiam executar JS no contexto
+      // do site (XSS armazenado se outro parceiro tivesse salvo conteudo malicioso).
+      if (!MIMES_COMPROVANTE_PERMITIDOS.has(mimeBruto)) {
+        toast.error('Comprovante em formato nao suportado');
+        return;
+      }
       const byteChars = atob(base64);
       const byteArray = new Uint8Array(byteChars.length);
       for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
-      const blob = new Blob([byteArray], { type: mimeType });
+      const blob = new Blob([byteArray], { type: mimeBruto });
       const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
     } catch {
       toast.error('Não foi possível abrir o comprovante');
     }

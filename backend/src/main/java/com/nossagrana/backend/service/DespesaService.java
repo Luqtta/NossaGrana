@@ -13,6 +13,7 @@ import com.nossagrana.backend.repository.CategoriaRepository;
 import com.nossagrana.backend.repository.DespesaRepository;
 import com.nossagrana.backend.repository.HistoricoEdicaoRepository;
 import com.nossagrana.backend.repository.UsuarioRepository;
+import com.nossagrana.backend.util.ArquivoValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -73,27 +74,40 @@ public class DespesaService {
         return mapToResponse(saved);
     }
 
+    private static final int MAX_BYTES_COMPROVANTE = 10 * 1024 * 1024;
+
     private void sincronizarComprovante(Despesa despesa, String urlComprovante, Usuario usuario) {
         if (urlComprovante == null || urlComprovante.isBlank() || !urlComprovante.startsWith("data:")) {
             return;
         }
+        // Valida o data URL: whitelist MIME + magic bytes + tamanho.
+        // Sem isso, atacante poderia salvar SVG malicioso e disparar XSS armazenado
+        // quando o parceiro abrisse o comprovante no Historico.
+        ArquivoValidator.Resultado v;
         try {
-            int virgula = urlComprovante.indexOf(',');
-            if (virgula <= 0) return;
-            String header = urlComprovante.substring(5, virgula);
-            String mime = header.contains(";") ? header.substring(0, header.indexOf(';')) : header;
-            byte[] dados = java.util.Base64.getDecoder().decode(urlComprovante.substring(virgula + 1));
+            v = ArquivoValidator.validarDataUrl(urlComprovante,
+                ArquivoValidator.MIME_COMPROVANTES, MAX_BYTES_COMPROVANTE);
+        } catch (BusinessException e) {
+            log.warn("Comprovante rejeitado (despesa {}): {}", despesa.getId(), e.getMessage());
+            throw e;
+        }
 
+        try {
             comprovanteRepository.findByDespesaId(despesa.getId())
                 .ifPresent(c -> comprovanteRepository.deleteById(c.getId()));
 
-            String extensao = mime.contains("pdf") ? "pdf" : (mime.contains("png") ? "png" : "jpg");
-            String nomeArquivo = "despesa-" + despesa.getId() + "-" + despesa.getDescricao().replaceAll("[^a-zA-Z0-9]", "_") + "." + extensao;
+            String extensao = v.mime.contains("pdf") ? "pdf"
+                : v.mime.contains("png") ? "png"
+                : v.mime.contains("webp") ? "webp"
+                : v.mime.contains("gif") ? "gif"
+                : "jpg";
+            String nomeArquivo = "despesa-" + despesa.getId() + "-"
+                + despesa.getDescricao().replaceAll("[^a-zA-Z0-9]", "_") + "." + extensao;
 
             com.nossagrana.backend.entity.Comprovante comp = com.nossagrana.backend.entity.Comprovante.builder()
                 .nome(nomeArquivo)
-                .mimeType(mime)
-                .dados(dados)
+                .mimeType(v.mime)
+                .dados(v.dados)
                 .mes(despesa.getDataTransacao().getMonthValue())
                 .ano(despesa.getDataTransacao().getYear())
                 .despesaId(despesa.getId())
@@ -317,7 +331,18 @@ public class DespesaService {
         historicoRepository.save(historico);
     }
 
-    public List<HistoricoEdicao> buscarHistorico(Long despesaId) {
+    public List<HistoricoEdicao> buscarHistorico(Long despesaId, Long usuarioId) {
+        // Valida que a despesa pertence ao casal do usuario antes de expor o historico.
+        // Sem isso, qualquer usuario autenticado conseguiria ler historico de
+        // despesas de OUTROS casais por enumeracao de IDs (IDOR).
+        Despesa despesa = despesaRepository.findById(despesaId)
+            .orElseThrow(() -> new ResourceNotFoundException("Despesa nao encontrada"));
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
+        if (usuario.getCasal() == null
+                || !despesa.getCasal().getId().equals(usuario.getCasal().getId())) {
+            throw new ForbiddenException("Sem permissao para ver este historico");
+        }
         return historicoRepository.findByDespesaIdOrderByDataEdicaoDesc(despesaId);
     }
 

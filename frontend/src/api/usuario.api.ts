@@ -42,7 +42,7 @@ export const usuarioApi = {
     await api.post('/usuarios/me/senha/solicitar');
   },
 
-  confirmarTrocaSenha: async (codigo: string, novaSenha: string): Promise<void> => {
-    await api.post('/usuarios/me/senha/confirmar', { codigo, novaSenha });
+  confirmarTrocaSenha: async (senhaAtual: string, codigo: string, novaSenha: string): Promise<void> => {
+    await api.post('/usuarios/me/senha/confirmar', { senhaAtual, codigo, novaSenha });
   },
 };

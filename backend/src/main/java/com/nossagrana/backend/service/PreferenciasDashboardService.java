@@ -3,13 +3,11 @@ package com.nossagrana.backend.service;
 import com.nossagrana.backend.dto.PreferenciasDashboardRequest;
 import com.nossagrana.backend.dto.PreferenciasDashboardResponse;
 import com.nossagrana.backend.entity.PreferenciasDashboard;
-import com.nossagrana.backend.exception.BusinessException;
 import com.nossagrana.backend.repository.PreferenciasDashboardRepository;
+import com.nossagrana.backend.util.ArquivoValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -57,12 +55,17 @@ public class PreferenciasDashboardService {
             pref.setImagemFundo(null);
             pref.setImagemFundoMime(null);
         } else if (request.getImagemFundoBase64() != null && !request.getImagemFundoBase64().isBlank()) {
-            byte[] dados = decodificarBase64(request.getImagemFundoBase64());
-            if (dados.length > MAX_IMAGE_BYTES) {
-                throw new BusinessException("Imagem excede 5MB");
-            }
-            pref.setImagemFundo(dados);
-            pref.setImagemFundoMime(request.getImagemFundoMime() != null ? request.getImagemFundoMime() : "image/jpeg");
+            // Validacao com whitelist de MIME + magic bytes. Sem isso, atacante poderia
+            // setar mimeType "image/svg+xml" com SVG malicioso e disparar XSS quando o
+            // backend devolvesse a imagem com aquele Content-Type.
+            ArquivoValidator.Resultado v = ArquivoValidator.validarDataUrl(
+                request.getImagemFundoBase64(),
+                ArquivoValidator.MIME_IMAGENS,
+                MAX_IMAGE_BYTES
+            );
+            pref.setImagemFundo(v.dados);
+            // mime definido pela validacao (do data URL), nao mais pelo campo opcional do request
+            pref.setImagemFundoMime(v.mime);
         }
 
         PreferenciasDashboard salvo = repository.save(pref);
@@ -84,19 +87,6 @@ public class PreferenciasDashboardService {
             }
         }
         return pref;
-    }
-
-    private byte[] decodificarBase64(String s) {
-        String b64 = s;
-        int idx = b64.indexOf(",");
-        if (b64.startsWith("data:") && idx > 0) {
-            b64 = b64.substring(idx + 1);
-        }
-        try {
-            return Base64.getDecoder().decode(b64);
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException("Imagem invalida");
-        }
     }
 
     private PreferenciasDashboardResponse mapToResponse(PreferenciasDashboard p, boolean temImagemFundo) {

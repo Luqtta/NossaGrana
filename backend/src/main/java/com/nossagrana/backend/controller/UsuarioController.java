@@ -73,7 +73,7 @@ public class UsuarioController {
     @PostMapping("/me/senha/confirmar")
     public ResponseEntity<Void> confirmarTrocaSenha(@Valid @RequestBody ConfirmarTrocaSenhaRequest request) {
         Usuario usuario = autenticacaoHelper.getUsuarioAtual();
-        usuarioService.confirmarTrocaSenha(usuario, request.getCodigo(), request.getNovaSenha());
+        usuarioService.confirmarTrocaSenha(usuario, request.getSenhaAtual(), request.getCodigo(), request.getNovaSenha());
         return ResponseEntity.ok().build();
     }
 }
