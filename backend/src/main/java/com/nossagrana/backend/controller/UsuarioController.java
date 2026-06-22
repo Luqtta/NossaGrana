@@ -56,9 +56,9 @@ public class UsuarioController {
                                                             HttpServletResponse httpResponse) {
         Usuario usuario = autenticacaoHelper.getUsuarioAtual();
         AuthResponse resp = usuarioService.confirmarTrocaEmail(usuario, request.getCodigo());
+        // Escreve cookie HttpOnly E mantem refreshToken no body (fallback p/ cookies third-party bloqueados).
         if (resp != null && resp.getRefreshToken() != null) {
             refreshCookie.escrever(httpResponse, resp.getRefreshToken());
-            resp.setRefreshToken(null);
         }
         return ResponseEntity.ok(resp);
     }

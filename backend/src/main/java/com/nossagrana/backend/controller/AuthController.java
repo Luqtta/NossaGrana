@@ -52,9 +52,17 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(HttpServletRequest httpRequest,
-                                                HttpServletResponse httpResponse) {
+                                                HttpServletResponse httpResponse,
+                                                @RequestBody(required = false) RefreshRequest body) {
+        // Aceita o refresh token de duas fontes (nessa ordem):
+        // 1) Cookie HttpOnly (preferido, mais seguro)
+        // 2) Body da request (fallback p/ navegadores que bloqueiam cookies third-party
+        //    quando frontend e backend estao em dominios diferentes — Safari, Brave, Firefox c/ proteção)
         String token = refreshCookie.ler(httpRequest);
-        if (token == null) {
+        if ((token == null || token.isBlank()) && body != null) {
+            token = body.getRefreshToken();
+        }
+        if (token == null || token.isBlank()) {
             throw new ForbiddenException("Refresh token nao encontrado");
         }
         AuthResponse response = authService.refresh(token);
@@ -96,11 +104,17 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    /** Move o refresh token do body do response para o cookie HttpOnly. */
+    /**
+     * Grava o refresh token no cookie HttpOnly E mantem no body do response.
+     * Ate poucas semanas atras o body era zerado pra forcar uso de cookie. Mantemos
+     * agora porque navegadores bloqueiam cookies third-party (Vercel/Railway em
+     * dominios diferentes) — o frontend precisa do refreshToken pro fallback via body.
+     * Quando configurarmos proxy reverso no Vercel, o cookie vira first-party e
+     * podemos voltar a zerar o body sem quebrar nada.
+     */
     private AuthResponse selarCookie(AuthResponse response, HttpServletResponse httpResponse) {
         if (response != null && response.getRefreshToken() != null) {
             refreshCookie.escrever(httpResponse, response.getRefreshToken());
-            response.setRefreshToken(null);
         }
         return response;
     }

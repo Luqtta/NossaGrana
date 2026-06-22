@@ -177,7 +177,9 @@ export const Configuracoes = () => {
     try {
       const response = await usuarioApi.confirmarTrocaEmail(codigoEmail);
       localStorage.setItem('token', response.token);
-      // refresh token agora vem no cookie HttpOnly
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(response));
       setUserData(response);
       setNomeConta(response.nome || '');

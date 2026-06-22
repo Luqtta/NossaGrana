@@ -39,9 +39,9 @@ public class ConviteController {
                                                        HttpServletResponse httpResponse) {
         Usuario usuario = autenticacaoHelper.getUsuarioAtual();
         AuthResponse resp = conviteService.aceitarConvite(codigo, usuario.getId());
+        // Escreve cookie HttpOnly E mantem refreshToken no body (fallback p/ cookies third-party bloqueados).
         if (resp != null && resp.getRefreshToken() != null) {
             refreshCookie.escrever(httpResponse, resp.getRefreshToken());
-            resp.setRefreshToken(null);
         }
         return ResponseEntity.ok(resp);
     }

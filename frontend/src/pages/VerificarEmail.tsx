@@ -42,7 +42,9 @@ export const VerificarEmail = () => {
         codigo,
       });
       localStorage.setItem('token', response.data.token);
-      // refresh token agora vem no cookie HttpOnly
+      if (response.data.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(response.data));
       toast.success('Email verificado! Bem-vindo ao NossaGrana!');
       navigate('/dashboard');

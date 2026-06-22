@@ -54,17 +54,23 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // O refresh token vai no cookie HttpOnly automaticamente (withCredentials: true).
-        // Nao mandamos nada no body — o backend le do cookie.
+        // Estrategia dupla: cookie HttpOnly (preferido) + refreshToken no body (fallback).
+        // O backend aceita ambos — usa o que tiver disponivel. Isso resolve o problema
+        // de navegadores (Safari, Brave, Firefox) que bloqueiam cookies third-party
+        // quando frontend (Vercel) e backend (Railway) estao em dominios diferentes.
+        const refreshTokenBackup = localStorage.getItem('refreshToken');
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/refresh`,
-          {},
+          refreshTokenBackup ? { refreshToken: refreshTokenBackup } : {},
           { withCredentials: true },
         );
 
-        const { token } = response.data;
+        const { token, refreshToken: novoRefreshToken } = response.data;
 
         localStorage.setItem('token', token);
+        if (novoRefreshToken) {
+          localStorage.setItem('refreshToken', novoRefreshToken);
+        }
 
         api.defaults.headers.common.Authorization = `Bearer ${token}`;
         originalRequest.headers.Authorization = `Bearer ${token}`;

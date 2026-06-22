@@ -21,7 +21,11 @@ export const Login = () => {
       const response = await api.post<AuthResponse>('/auth/login', loginData);
 
       localStorage.setItem('token', response.data.token);
-      // refresh token agora vem no cookie HttpOnly — nao precisa armazenar
+      // Cookie HttpOnly e preferido, mas guardamos refreshToken como fallback
+      // pra navegadores que bloqueiam cookies third-party (Safari, Brave, etc.)
+      if (response.data.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(response.data));
 
       toast.success('Login realizado com sucesso!');
