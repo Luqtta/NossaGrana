@@ -42,7 +42,7 @@ export const NovaDespesa = () => {
     if (formData.categoriaId) {
       carregarSaldoCategoria();
     }
-  }, [formData.categoriaId]);
+  }, [formData.categoriaId, formData.dataTransacao]);
 
   const carregarDados = async () => {
     try {
@@ -64,8 +64,11 @@ export const NovaDespesa = () => {
   };
 
   const carregarSaldoCategoria = async () => {
-    const mes = new Date().getMonth() + 1;
-    const ano = new Date().getFullYear();
+    // Usa o mes/ano da data da despesa (nao "hoje") — se o usuario lanca despesa
+    // dia 25/jun estando em 01/jul, o saldo mostrado tem que ser o de junho.
+    const d = new Date(formData.dataTransacao + 'T00:00:00');
+    const mes = d.getMonth() + 1;
+    const ano = d.getFullYear();
     try {
       const saldo = await categoriasApi.buscarSaldo(formData.categoriaId, mes, ano);
       setSaldoCategoria(saldo);
