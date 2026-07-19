@@ -16,7 +16,7 @@ public class CategoriaCriarRequest {
     private String nome;
 
     @NotBlank(message = "Icone é obrigatório")
-    @Size(max = 16)
+    @Size(max = 64)
     private String icone;
 
     @NotBlank(message = "Cor é obrigatória")
