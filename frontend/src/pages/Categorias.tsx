@@ -452,7 +452,7 @@ export const Categorias = () => {
               </button>
               <button
                 onClick={handleEditar}
-                disabled={submitting || isMetaExcedida}
+                disabled={submitting}
                 className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-500"
               >
                 {submitting ? 'Salvando...' : 'Salvar'}
