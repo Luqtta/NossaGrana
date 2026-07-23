@@ -161,6 +161,16 @@ public class DespesaService {
 
         validarResponsavel(usuario, request.getResponsavel(), despesa);
 
+        Categoria novaCategoria = despesa.getCategoria();
+        if (request.getCategoriaId() != null
+                && !request.getCategoriaId().equals(despesa.getCategoria().getId())) {
+            novaCategoria = categoriaRepository.findById(request.getCategoriaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria nao encontrada"));
+            validarCategoria(usuario, novaCategoria);
+            registrarEdicao(despesa, "categoria",
+                despesa.getCategoria().getNome(), novaCategoria.getNome(), usuario);
+        }
+
         if (!despesa.getDescricao().equals(request.getDescricao())) {
             registrarEdicao(despesa, "descricao", despesa.getDescricao(), request.getDescricao(), usuario);
         }
@@ -168,6 +178,7 @@ public class DespesaService {
             registrarEdicao(despesa, "valor", despesa.getValor().toString(), request.getValor().toString(), usuario);
         }
 
+        despesa.setCategoria(novaCategoria);
         despesa.setDataTransacao(request.getDataTransacao());
         despesa.setDescricao(request.getDescricao());
         despesa.setValor(request.getValor());
