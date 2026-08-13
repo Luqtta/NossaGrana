@@ -75,10 +75,8 @@ export const Categorias = () => {
 
   const handleDefinirOrcamento = async () => {
     if (!modalOrcamento || submitting) return;
-    if (metaMensal > 0 && totalComNovoOrcamento > metaMensal) {
-      toast.error('Or?amento total ultrapassa a meta mensal. Reajuste para salvar.');
-      return;
-    }
+    // ponytail: soft warning em vez de hard block — usuario deve poder salvar mesmo estourando meta
+    // (pode estar reduzindo uma categoria de outra ja alta, ou queira estourar intencionalmente).
     setSubmitting(true);
     try {
       await categoriasApi.definirOrcamento(modalOrcamento.id, novoOrcamento);
@@ -339,7 +337,7 @@ export const Categorias = () => {
               </button>
               <button
                 onClick={handleDefinirOrcamento}
-                disabled={submitting || isMetaExcedida}
+                disabled={submitting}
                 className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-500"
               >
                 {submitting ? 'Salvando...' : 'Salvar'}
@@ -400,7 +398,7 @@ export const Categorias = () => {
               </button>
               <button
                 onClick={handleCriar}
-                disabled={submitting || isMetaExcedida}
+                disabled={submitting}
                 className="flex-1 px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-500"
               >
                 {submitting ? 'Criando...' : 'Criar'}

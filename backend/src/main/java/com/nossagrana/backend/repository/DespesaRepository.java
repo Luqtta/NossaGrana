@@ -97,7 +97,10 @@ public interface DespesaRepository extends JpaRepository<Despesa, Long> {
      *   [1] = soma (BigDecimal)
      * Uma unica query agregada em vez de 12 queries sequenciais.
      */
-    @Query("SELECT MONTH(d.dataTransacao), COALESCE(SUM(d.valor), 0) " +
+    // ponytail: sem COALESCE — literal 0 (Integer) mistura tipo com SUM (BigDecimal)
+    // e quebra no Hibernate 6. Meses sem despesa simplesmente nao aparecem no result;
+    // o caller preenche zero.
+    @Query("SELECT MONTH(d.dataTransacao), SUM(d.valor) " +
            "FROM Despesa d " +
            "WHERE d.casal.id = :casalId AND YEAR(d.dataTransacao) = :ano " +
            "GROUP BY MONTH(d.dataTransacao)")
